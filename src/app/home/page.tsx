@@ -3,6 +3,15 @@
 import { useState } from 'react';
 import SunsetBackground from '@/components/home/SunsetBackground';
 
+type User = {
+  rank: number;
+  name: string;
+  value: number;
+  avatar: string;
+  isMe: boolean;
+  org?: string; // org는 선택적 속성
+};
+
 export default function HomePage() {
   const [activeRankingTab, setActiveRankingTab] = useState<'global' | 'friends'>('global');
   const [activeRankingType, setActiveRankingType] = useState<'score' | 'planets' | 'nfts'>('score');
@@ -97,23 +106,24 @@ export default function HomePage() {
   ];
 
   // 현재 선택된 랭킹 데이터 가져오기
-  const getCurrentRanking = () => {
+  const getCurrentRanking = (): User[] => {
     if (activeRankingTab === 'global') {
       switch (activeRankingType) {
-        case 'score': return globalScoreRanking;
-        case 'planets': return globalPlanetRanking;
-        case 'nfts': return globalNFTRanking;
-        default: return globalScoreRanking;
+        case 'score': return globalScoreRanking as User[];
+        case 'planets': return globalPlanetRanking as User[];
+        case 'nfts': return globalNFTRanking as User[];
+        default: return globalScoreRanking as User[];
       }
     } else {
       switch (activeRankingType) {
-        case 'score': return friendsScoreRanking;
-        case 'planets': return friendsPlanetRanking;
-        case 'nfts': return friendsNFTRanking;
-        default: return friendsScoreRanking;
+        case 'score': return friendsScoreRanking as User[];
+        case 'planets': return friendsPlanetRanking as User[];
+        case 'nfts': return friendsNFTRanking as User[];
+        default: return friendsScoreRanking as User[];
       }
     }
   };
+  
 
   // 랭킹 타입별 단위 가져오기
   const getRankingUnit = () => {

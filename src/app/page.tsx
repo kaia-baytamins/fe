@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Header from '@/components/Header';
+// import Header from '@/components/Header';
 import TabBar from '@/components/TabBar';
 import HomeContent from '@/app/home/page';
 import ExploreContent from '@/app/explore/page';
