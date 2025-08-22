@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import StarBackground from '@/components/explore/StarBackground';
+import SunsetBackground from '@/components/home/SunsetBackground';
 
 export default function HomePage() {
   const [activeRankingTab, setActiveRankingTab] = useState<'global' | 'friends'>('global');
@@ -129,8 +129,8 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-full p-4 space-y-6">
-      {/* 반짝이는 별 배경 */}
-      <StarBackground />
+      {/* 노을지는 배경 */}
+      <SunsetBackground />
       
       {/* 메인 콘텐츠 */}
       <div className="relative z-10">
