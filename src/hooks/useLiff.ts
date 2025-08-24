@@ -1,0 +1,49 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+
+export const useLiff = () => {
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const initializeLiff = async () => {
+      if (typeof window !== 'undefined') {
+        try {
+          const liffModule = await import('@line/liff');
+          const liff = liffModule.default;
+
+          await liff.init({
+            liffId: '2007977169-WBZPyzZj',
+          });
+
+          console.log('LIFF 초기화 완료!');
+
+          if (!liff.isLoggedIn()) {
+            console.log('로그인 필요');
+            liff.login();
+          } else {
+            console.log('로그인 상태 확인 완료');
+            const token = liff.getAccessToken();
+            setAccessToken(token);
+            console.log('Access Token:', token);
+            
+            const userProfile = await liff.getProfile();
+            setProfile(userProfile);
+            console.log('User Profile:', userProfile);
+          }
+        } catch (error) {
+          console.error('LIFF 초기화 실패:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    initializeLiff();
+  }, []);
+
+
+  return { accessToken, profile, isLoading };
+};

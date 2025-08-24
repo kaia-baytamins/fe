@@ -9,16 +9,23 @@ import MarketContent from '@/app/market/page';
 import QuestContent from '@/app/quest/page';
 import SettingsContent from '@/app/settings/page';
 
+import { useLiff } from '@/hooks/useLiff';
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState('home');
 
+  // 메인에서 LIFF 데이터 관리
+  const { accessToken, profile, isLoading } = useLiff();
+
   // 활성 탭에 따른 컴포넌트 매핑
   const renderMainContent = () => {
+    const commonProps = { accessToken, profile, isLoading };
+
     switch (activeTab) {
       case 'home':
-        return <HomeContent />;
+        return <HomeContent {...commonProps} />;
       case 'explore':
-        return <ExploreContent />;
+        return <ExploreContent  />;
       case 'market':
         return <MarketContent />;
       case 'quest':
@@ -26,7 +33,7 @@ export default function Home() {
       case 'settings':
         return <SettingsContent />;
       default:
-        return <HomeContent />;
+        return <HomeContent {...commonProps} />;
     }
   };
 
