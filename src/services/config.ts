@@ -30,6 +30,10 @@ export const API_CONFIG = {
     GAS_STATS: '/blockchain/gas-delegation/stats',
     GAS_SUPPORTED_TYPES: '/blockchain/gas-delegation/supported-types',
     GAS_FEE_PAYER: '/blockchain/gas-delegation/fee-payer',
+    
+    // Leaderboard endpoints
+    LEADERBOARD: '/leaderboard',
+    LEADERBOARD_TOP_PERFORMERS: '/leaderboard/top-performers',
   }
 };
 
