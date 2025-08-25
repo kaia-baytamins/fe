@@ -6,9 +6,10 @@ interface DefiModalProps {
   onClose: () => void;
   onParticipate: (amount: number) => void;
   walletBalance?: number;
+  loading?: boolean;
 }
 
-export default function DefiModal({ isOpen, type, onClose, onParticipate, walletBalance = 1250 }: DefiModalProps) {
+export default function DefiModal({ isOpen, type, onClose, onParticipate, walletBalance = 1250, loading = false }: DefiModalProps) {
   const [amount, setAmount] = useState(0);
   const [sliderValue, setSliderValue] = useState(0);
 

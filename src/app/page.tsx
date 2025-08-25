@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import TabBar from '@/components/TabBar';
 import HomeContent from '@/app/home/page';
@@ -10,12 +10,32 @@ import QuestContent from '@/app/quest/page';
 import SettingsContent from '@/app/settings/page';
 
 import { useLiff } from '@/hooks/useLiff';
+import { authService } from '@/services/authService';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('home'); // 현재 활성화된 탭 상태 관리
+  const [authCompleted, setAuthCompleted] = useState(false);
 
   // 메인에서 LIFF 데이터 관리
   const { accessToken, profile, isLoading } = useLiff();
+
+  // Auto-login when profile is available
+  useEffect(() => {
+    const handleAutoLogin = async () => {
+      if (profile && !authCompleted && !authService.isAuthenticated()) {
+        try {
+          console.log('Auto-logging in with LINE profile:', profile);
+          await authService.simpleLogin(profile);
+          setAuthCompleted(true);
+          console.log('Auto-login completed successfully');
+        } catch (error) {
+          console.error('Auto-login failed:', error);
+        }
+      }
+    };
+
+    handleAutoLogin();
+  }, [profile, authCompleted]);
 
   // 활성 탭에 따른 컴포넌트 매핑 - profile을 props로 전달
   const renderMainContent = () => {
