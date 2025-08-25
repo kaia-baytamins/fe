@@ -19,6 +19,20 @@ interface SimpleLoginResponse {
   isNewUser: boolean;
 }
 
+interface RegisterPetRequest {
+  lineUserId: string;
+  petType: string;
+}
+
+interface RegisterPetResponse {
+  pet: {
+    id: string;
+    name: string;
+    type: string;
+    createdAt: string;
+  };
+}
+
 class AuthService {
   private readonly USER_KEY = 'authUser';
   private readonly LINE_USER_ID_KEY = 'lineUserId';
@@ -34,7 +48,7 @@ class AuthService {
       statusMessage: profile.statusMessage,
     };
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}/auth/simple-login`, {
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SIMPLE_LOGIN}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -50,6 +64,47 @@ class AuthService {
     this.setLineUserId(data.user.lineUserId);
 
     return data;
+  }
+
+  /**
+   * Register a pet for the user
+   */
+  async registerPet(petType: string): Promise<RegisterPetResponse> {
+    const lineUserId = this.getLineUserId();
+    if (!lineUserId) {
+      throw new Error('User not authenticated');
+    }
+
+    const request: RegisterPetRequest = {
+      lineUserId,
+      petType,
+    };
+
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PET_REGISTER}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
+
+    await handleApiError(response);
+    const data = await response.json();
+
+    // Store pet data
+    this.setUserPet(data.pet);
+
+    return data;
+  }
+
+  /**
+   * Store pet data in localStorage
+   */
+  setUserPet(pet: RegisterPetResponse['pet']) {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('userPet', JSON.stringify(pet));
+      console.log('Pet registered successfully:', pet);
+    }
   }
 
   /**
