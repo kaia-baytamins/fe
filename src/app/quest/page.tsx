@@ -37,7 +37,7 @@ export default function QuestPage() {
     setShowDefiModal(true);
   };
 
-  const handleParticipateDefi = () => {
+  const handleParticipateDefi = (amount: number) => {
     const typeNames = {
       'staking': '스테이킹',
       'lp': 'LP 제공',
@@ -45,7 +45,7 @@ export default function QuestPage() {
     };
     
     if (currentDefiType) {
-      alert(`🎉 ${typeNames[currentDefiType]} 참여 완료!\n\nDeFi 프로토콜이 연결되었습니다.\n관련 퀘스트 진행률이 업데이트됩니다.`);
+      alert(`🎉 ${typeNames[currentDefiType]} 참여 완료!\n\n투자 금액: ${amount.toFixed(2)} KAIA\nDeFi 프로토콜이 연결되었습니다.\n관련 퀘스트 진행률이 업데이트됩니다.`);
       setShowDefiModal(false);
       setCurrentDefiType(null);
     }
@@ -298,6 +298,7 @@ export default function QuestPage() {
         type={currentDefiType}
         onClose={() => {setShowDefiModal(false); setCurrentDefiType(null);}}
         onParticipate={handleParticipateDefi}
+        walletBalance={1250}
       />
     </div>
   );
