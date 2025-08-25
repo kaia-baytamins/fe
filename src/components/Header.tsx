@@ -17,10 +17,24 @@ const Header = ({ activeTab }) => {
           clientId: '1adca77b-f876-42bb-86bf-28598b20232b', // client ID
           chainId: '1001', // kairos (mainet : 8217)
         });
-
-
+        
+        console.log('SDK 객체:', sdk);
         setSdk(sdk);
+
+        
+        const walletProvider = sdk.getWalletProvider();
+        console.log('walletProvider 객체:', walletProvider);
         setWalletProvider(walletProvider); 
+
+
+        const accounts = await walletProvider.request({ method: 'kaia_accounts' }) as string[];
+        console.log('accounts:', accounts);
+
+        const walletProvider_Type = walletProvider.getWalletType();
+        console.log('초기 지갑 타입:', walletProvider_Type);
+
+        
+        
         console.log('walletProvider:', walletProvider);
         const walletType = await walletProvider.getWalletType();
         console.log('지갑 타입:', walletType);
