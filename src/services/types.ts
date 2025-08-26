@@ -98,6 +98,14 @@ export interface DefiTransactionData {
   error?: string;
 }
 
+export interface ApprovalCheckResponse {
+  success: boolean;
+  needsApproval: boolean;
+  currentAllowance: string;
+  requiredAmount: string;
+  error?: string;
+}
+
 export interface DefiStats {
   platform: {
     totalValueLocked: string;

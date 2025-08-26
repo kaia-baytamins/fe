@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { defiQuestService } from '../../services/defiQuestService';
+import type { ApprovalCheckResponse } from '../../services/types';
 
 interface DefiModalProps {
   isOpen: boolean;
@@ -12,14 +14,50 @@ interface DefiModalProps {
 export default function DefiModal({ isOpen, type, onClose, onParticipate, walletBalance = 1250, loading = false }: DefiModalProps) {
   const [amount, setAmount] = useState(0);
   const [sliderValue, setSliderValue] = useState(0);
+  const [approvalStatus, setApprovalStatus] = useState<ApprovalCheckResponse | null>(null);
+  const [checkingApproval, setCheckingApproval] = useState(false);
 
   // 모달이 열릴 때 초기화 - 조건문보다 먼저 배치
   useEffect(() => {
     if (isOpen) {
       setAmount(0);
       setSliderValue(0);
+      setApprovalStatus(null);
     }
   }, [isOpen]);
+
+  // amount 변경시 approval 체크
+  useEffect(() => {
+    if (amount > 0 && (type === 'staking' || type === 'lending')) {
+      checkApprovalStatus();
+    } else {
+      setApprovalStatus(null);
+    }
+  }, [amount, type]);
+
+  const checkApprovalStatus = async () => {
+    if (!type || amount <= 0) return;
+    
+    setCheckingApproval(true);
+    try {
+      let response: ApprovalCheckResponse;
+      
+      if (type === 'staking') {
+        response = await defiQuestService.checkStakingApproval(amount.toString());
+      } else if (type === 'lending') {
+        response = await defiQuestService.checkLendingApproval(amount.toString());
+      } else {
+        return;
+      }
+      
+      setApprovalStatus(response);
+    } catch (error) {
+      console.error('Error checking approval status:', error);
+      setApprovalStatus(null);
+    } finally {
+      setCheckingApproval(false);
+    }
+  };
 
   // 조건부 렌더링을 모든 Hooks 이후로 이동
   if (!isOpen || !type) return null;
@@ -99,7 +137,7 @@ export default function DefiModal({ isOpen, type, onClose, onParticipate, wallet
         {/* 지갑 잔액 표시 */}
         <div className="bg-slate-700/30 rounded-lg p-3 mb-4">
           <div className="text-gray-400 text-xs mb-1">지갑 잔액</div>
-          <div className="text-white font-medium">{walletBalance.toLocaleString()} KAIA</div>
+          <div className="text-white font-medium">{walletBalance.toLocaleString()} USDT</div>
         </div>
 
         {/* 투자 금액 입력 */}
@@ -125,7 +163,7 @@ export default function DefiModal({ isOpen, type, onClose, onParticipate, wallet
               min="0"
               step="0.01"
             />
-            <span className="absolute right-3 top-3 text-gray-400 text-sm">KAIA</span>
+            <span className="absolute right-3 top-3 text-gray-400 text-sm">USDT</span>
           </div>
 
           {/* 슬라이더 */}
@@ -164,13 +202,13 @@ export default function DefiModal({ isOpen, type, onClose, onParticipate, wallet
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-400 text-sm">예상 월간 수익</span>
                   <span className="text-yellow-400 font-medium">
-                    +{estimatedMonthlyReturn.toFixed(2)} KAIA
+                    +{estimatedMonthlyReturn.toFixed(2)} USDT
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400 text-sm">예상 연간 수익</span>
                   <span className="text-green-400 font-bold">
-                    +{estimatedYearlyReturn.toFixed(2)} KAIA
+                    +{estimatedYearlyReturn.toFixed(2)} USDT
                   </span>
                 </div>
               </div>
@@ -188,16 +226,28 @@ export default function DefiModal({ isOpen, type, onClose, onParticipate, wallet
           <button 
             className={`flex-1 py-3 px-2 rounded-xl font-medium transition-colors text-sm leading-tight ${
               amount > 0 
-                ? 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white' 
+                ? (approvalStatus?.needsApproval 
+                    ? 'bg-gradient-to-r from-orange-600 to-yellow-600 hover:from-orange-700 hover:to-yellow-700 text-white'
+                    : 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white')
                 : 'bg-slate-700 text-gray-400 cursor-not-allowed'
             }`}
             onClick={() => amount > 0 && onParticipate(amount)}
-            disabled={amount <= 0}
+            disabled={amount <= 0 || checkingApproval}
           >
-            {amount > 0 ? (
+            {checkingApproval ? (
+              <div className="flex items-center justify-center">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                <span>확인 중...</span>
+              </div>
+            ) : amount > 0 ? (
               <div className="flex flex-col items-center justify-center">
-                <span className="font-bold">{amount.toFixed(2)} KAIA</span>
-                <span className="text-xs opacity-90">참여하기</span>
+                <span className="font-bold">{amount.toFixed(2)} USDT</span>
+                <span className="text-xs opacity-90">
+                  {approvalStatus?.needsApproval ? 'USDT 승인하기' : (
+                    type === 'staking' ? '스테이킹하기' : 
+                    type === 'lending' ? '대출 공급하기' : '참여하기'
+                  )}
+                </span>
               </div>
             ) : (
               '금액을 입력하세요'

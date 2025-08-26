@@ -21,6 +21,8 @@ export const API_CONFIG = {
     DEFI_CLAIM: '/quests/defi/{questId}/claim',
     DEFI_STATS: '/quests/defi/stats',
     DEFI_PREPARE_FAUCET: '/quests/defi/prepare-faucet',
+    DEFI_CHECK_STAKING_APPROVAL: '/quests/defi/check-staking-approval',
+    DEFI_CHECK_LENDING_APPROVAL: '/quests/defi/check-lending-approval',
     
     // Gas Delegation endpoints
     GAS_DELEGATE: '/blockchain/gas-delegation/delegate',
