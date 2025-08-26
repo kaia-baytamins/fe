@@ -6,7 +6,8 @@ import type {
   DefiStats,
   Quest,
   QuestProgress,
-  ClaimRewardResponse
+  ClaimRewardResponse,
+  ApprovalCheckResponse
 } from './types';
 
 interface DefiQuestParticipationRequest {
@@ -164,6 +165,26 @@ class DefiQuestService {
       console.error('Error getting recommended quest:', error);
       return null;
     }
+  }
+
+  /**
+   * Check if USDT approval is needed for staking
+   */
+  async checkStakingApproval(amount: string): Promise<ApprovalCheckResponse> {
+    return this.fetchApi<ApprovalCheckResponse>(API_CONFIG.ENDPOINTS.DEFI_CHECK_STAKING_APPROVAL, {
+      method: 'POST',
+      body: JSON.stringify({ amount }),
+    });
+  }
+
+  /**
+   * Check if USDT approval is needed for lending
+   */
+  async checkLendingApproval(amount: string): Promise<ApprovalCheckResponse> {
+    return this.fetchApi<ApprovalCheckResponse>(API_CONFIG.ENDPOINTS.DEFI_CHECK_LENDING_APPROVAL, {
+      method: 'POST',
+      body: JSON.stringify({ amount }),
+    });
   }
 }
 
