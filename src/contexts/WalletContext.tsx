@@ -15,7 +15,14 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 export const useWallet = () => {
   const context = useContext(WalletContext);
   if (context === undefined) {
-    throw new Error('useWallet must be used within a WalletProvider');
+    // During SSR/static generation, provide safe defaults
+    return {
+      walletAddress: null,
+      tokenBalance: null,
+      setWalletAddress: () => {},
+      setTokenBalance: () => {},
+      getNumericBalance: () => 0,
+    };
   }
   return context;
 };

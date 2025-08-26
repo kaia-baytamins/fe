@@ -101,8 +101,12 @@ export default function PetSelection({ onPetSelect, userProfile }) {
                           alt={pet.name}
                           className="relative w-full h-full object-cover rounded-full border-4 border-white/50"
                           onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
+                            const target = e.target as HTMLImageElement;
+                            const nextSibling = target.nextSibling as HTMLElement;
+                            target.style.display = 'none';
+                            if (nextSibling) {
+                              nextSibling.style.display = 'flex';
+                            }
                           }}
                         />
                         {/* 대체 이미지 */}
@@ -174,8 +178,12 @@ export default function PetSelection({ onPetSelect, userProfile }) {
                       alt={selectedPet.name}
                       className="relative w-full h-full object-cover rounded-full border-4 border-white/50 transform scale-110"
                       onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
+                        const target = e.target as HTMLImageElement;
+                        const nextSibling = target.nextSibling as HTMLElement;
+                        target.style.display = 'none';
+                        if (nextSibling) {
+                          nextSibling.style.display = 'flex';
+                        }
                       }}
                     />
                     <div 

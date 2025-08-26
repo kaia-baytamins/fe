@@ -39,9 +39,8 @@ export default function DynamicCosmicBackground() {
   const meteorsRef = useRef<Meteor[]>([]);
   const starsRef = useRef<Star[]>([]);
   const blackHolesRef = useRef<BlackHole[]>([]);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | undefined>(undefined);
   const lastMeteorTime = useRef(0);
-  const lastBlackHoleTime = useRef(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -248,12 +247,12 @@ export default function DynamicCosmicBackground() {
         }
 
         // 꼬리 감소
-        meteor.trail.forEach((point, index) => {
+        meteor.trail.forEach((point) => {
           point.opacity *= 0.95;
         });
 
         // 운석 꼬리 그리기
-        meteor.trail.forEach((point, index) => {
+        meteor.trail.forEach((point) => {
           if (point.opacity > 0.1) {
             const size = meteor.size * (point.opacity * 0.8);
             

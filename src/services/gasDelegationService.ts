@@ -135,7 +135,7 @@ class GasDelegationService {
       gas: string;
       gasPrice?: string;
       value: string;
-      type: string;
+      type: 'value_transfer' | 'value_transfer_memo' | 'contract_execution';
     }
   ): Promise<{
     prepared: TransactionForSigning;
