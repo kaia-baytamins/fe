@@ -39,6 +39,9 @@ export const API_CONFIG = {
     // Leaderboard endpoints
     LEADERBOARD: '/leaderboard',
     LEADERBOARD_TOP_PERFORMERS: '/leaderboard/top-performers',
+    
+    // Inventory endpoints
+    INVENTORY_WALLET: '/inventory/wallet',
   }
 };
 
