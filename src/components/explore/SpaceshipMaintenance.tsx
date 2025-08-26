@@ -21,6 +21,9 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
   const [isLoadingInventory, setIsLoadingInventory] = useState(true);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
   const [equippedItems, setEquippedItems] = useState<any>({});
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationType, setNotificationType] = useState<'success' | 'error'>('success');
 
   // 테스트용 지갑 주소
   const testWalletAddress = '0x1234567890123456789012345678901234567890';
@@ -126,20 +129,26 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
     filterItemsByCategory();
   }, [selectedCategory, itemsData, inventoryData, equippedItems]);
 
+  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+    setNotificationMessage(message);
+    setNotificationType(type);
+    setShowNotificationModal(true);
+  };
+
   const handleEquip = async (item: any) => {
     try {
       console.log('⚙️ 장착 시작:', item);
       const response = await inventoryService.equipItem(testWalletAddress, item.id);
       
       if (response.success) {
-        alert(`✅ ${item.name}이(가) 장착되었습니다!`);
+        showNotification(`✅ ${item.name}이(가) 장착되었습니다!`, 'success');
         // 인벤토리와 장착 상태 다시 로드
         await fetchInventoryData();
         await fetchEquippedItems();
       }
     } catch (error) {
       console.error('장착 실패:', error);
-      alert('장착에 실패했습니다.');
+      showNotification('장착에 실패했습니다.', 'error');
     }
   };
 
@@ -149,14 +158,14 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
       const response = await inventoryService.unequipItem(testWalletAddress, item.id);
       
       if (response.success) {
-        alert(`🔓 ${item.name} 해제되었습니다!`);
+        showNotification(`🔓 ${item.name}이(가) 해제되었습니다!`, 'success');
         // 인벤토리와 장착 상태 다시 로드
         await fetchInventoryData();
         await fetchEquippedItems();
       }
     } catch (error) {
       console.error('해제 실패:', error);
-      alert('해제에 실패했습니다.');
+      showNotification('해제에 실패했습니다.', 'error');
     }
   };
 
@@ -314,6 +323,37 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
           )}
         </div>
       </div>
+
+      {/* 알림 모달 */}
+      {showNotificationModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
+          <div className="bg-slate-800 rounded-2xl p-6 max-w-sm w-full mx-4 border border-slate-600">
+            <div className="text-center">
+              <div className={`text-4xl mb-4 ${notificationType === 'success' ? '✅' : '❌'}`}>
+                {notificationType === 'success' ? '✅' : '❌'}
+              </div>
+              <h3 className={`text-lg font-bold mb-4 ${
+                notificationType === 'success' ? 'text-green-400' : 'text-red-400'
+              }`}>
+                {notificationType === 'success' ? '알림' : '오류'}
+              </h3>
+              <p className="text-sm text-gray-300 mb-6 leading-relaxed">
+                {notificationMessage}
+              </p>
+              <button
+                onClick={() => setShowNotificationModal(false)}
+                className={`w-full py-3 rounded-xl font-medium transition-colors ${
+                  notificationType === 'success' 
+                    ? 'bg-green-600 hover:bg-green-700 text-white' 
+                    : 'bg-red-600 hover:bg-red-700 text-white'
+                }`}
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

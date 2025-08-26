@@ -1,40 +1,14 @@
 import { API_CONFIG, handleApiError } from './config';
 
-export type LeaderboardType = 
-  | 'total_explorations' 
-  | 'successful_explorations' 
-  | 'total_staked' 
-  | 'level' 
-  | 'experience';
-
-export type LeaderboardPeriod = 'all_time' | 'weekly' | 'monthly' | 'daily';
-
-export interface LeaderboardUser {
-  id: string;
-  username: string;
-  walletAddress: string;
-  level: number;
-}
-
-export interface LeaderboardMetadata {
-  petName?: string;
-  petType?: 'momoco' | 'panlulu' | 'hoshitanu' | 'mizuru';
-  spaceshipName?: string;
-}
-
-export interface LeaderboardEntry {
+export interface LeaderboardRankingEntry {
   rank: number;
+  username: string;
   score: number;
-  previousRank?: number;
-  rankChange?: number;
-  user: LeaderboardUser;
-  metadata?: LeaderboardMetadata;
 }
 
-export interface LeaderboardParams {
-  type?: LeaderboardType;
-  period?: LeaderboardPeriod;
-  limit?: number;
+export interface LeaderboardRankingsResponse {
+  totalExplorations: LeaderboardRankingEntry[];
+  successfulExplorations: LeaderboardRankingEntry[];
 }
 
 export interface TopPerformer {
@@ -59,23 +33,11 @@ export interface TopPerformersResponse {
 
 class LeaderboardService {
   /**
-   * 전체 리더보드 조회 (인증 불필요)
+   * 랭킹 데이터 조회 (인증 불필요)
    */
-  async getLeaderboard(params: LeaderboardParams = {}): Promise<LeaderboardEntry[]> {
-    const { 
-      type = 'total_explorations', 
-      period = 'all_time', 
-      limit = 100 
-    } = params;
-
-    const queryParams = new URLSearchParams({
-      type,
-      period,
-      limit: limit.toString()
-    });
-
+  async getRankings(): Promise<LeaderboardRankingsResponse> {
     const response = await fetch(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LEADERBOARD}?${queryParams}`, 
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LEADERBOARD}`, 
       {
         method: 'GET',
         headers: {
@@ -87,7 +49,7 @@ class LeaderboardService {
     await handleApiError(response);
     const data = await response.json();
     
-    console.log('📊 Leaderboard data:', data);
+    console.log('📊 Rankings data:', data);
     return data;
   }
 

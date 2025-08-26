@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import SunsetBackground from '@/components/home/SunsetBackground';
 import { useLineFriends } from '@/hooks/useLineFriends';
-import { leaderboardService, LeaderboardEntry } from '@/services/leaderboardService';
+import { leaderboardService, LeaderboardRankingEntry, LeaderboardRankingsResponse } from '@/services/leaderboardService';
 
 export default function HomePage({ accessToken, profile, isLoading }) {
   const [activeRankingTab, setActiveRankingTab] = useState<'global' | 'friends'>('global');
-  const [activeRankingType, setActiveRankingType] = useState<'score' | 'planets' | 'nfts'>('score');
+  const [activeRankingType, setActiveRankingType] = useState<'explorations' | 'planets'>('explorations');
   const [showInviteSuccessModal, setShowInviteSuccessModal] = useState(false);
-  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardRankingsResponse | null>(null);
   const [isLoadingRanking, setIsLoadingRanking] = useState(true);
   const [rankingError, setRankingError] = useState<string | null>(null);
   
@@ -25,32 +25,11 @@ export default function HomePage({ accessToken, profile, isLoading }) {
       setIsLoadingRanking(true);
       setRankingError(null);
       
-      // 랭킹 타입을 API 형식으로 매핑
-      let apiType: 'total_explorations' | 'successful_explorations' | 'level';
-      switch (activeRankingType) {
-        case 'score':
-          apiType = 'total_explorations';
-          break;
-        case 'planets':
-          apiType = 'successful_explorations';
-          break;
-        case 'nfts':
-          apiType = 'level'; // NFT는 레벨로 대체
-          break;
-        default:
-          apiType = 'total_explorations';
-      }
-
-      const data = await leaderboardService.getLeaderboard({
-        type: apiType,
-        period: 'all_time',
-        limit: 10
-      });
-
+      const data = await leaderboardService.getRankings();
       setLeaderboardData(data);
       
       // 빈 데이터일 때 로그
-      if (data.length === 0) {
+      if (!data.totalExplorations?.length && !data.successfulExplorations?.length) {
         console.log('⚠️ API returned empty leaderboard data');
       }
     } catch (error) {
@@ -64,17 +43,17 @@ export default function HomePage({ accessToken, profile, isLoading }) {
   // 리더보드 데이터 가져오기
   useEffect(() => {
     fetchLeaderboardData();
-  }, [activeRankingType]);
+  }, []);
 
-  // 글로벌 랭킹 데이터 (점수)
-  const globalScoreRanking = [
-    { rank: 1, name: '우주탐험가123', value: 2890, avatar: '🚀', isMe: false },
-    { rank: 2, name: '스타워즈팬', value: 2750, avatar: '⭐', isMe: false },
-    { rank: 3, name: '나', value: 2340, avatar: '🛸', isMe: true },
-    { rank: 4, name: '코스모스', value: 2180, avatar: '🌌', isMe: false },
-    { rank: 5, name: '은하수여행자', value: 2050, avatar: '🌟', isMe: false },
-    { rank: 6, name: '화성정착민', value: 1890, avatar: '🔴', isMe: false },
-    { rank: 7, name: '달탐험대', value: 1720, avatar: '🌙', isMe: false },
+  // 글로벌 랭킹 데이터 (탐험 횟수)
+  const globalExplorationsRanking = [
+    { rank: 1, name: '우주탐험가123', value: 100, avatar: '🚀', isMe: false },
+    { rank: 2, name: '스타워즈팬', value: 85, avatar: '⭐', isMe: false },
+    { rank: 3, name: '나', value: 67, avatar: '🛸', isMe: true },
+    { rank: 4, name: '코스모스', value: 54, avatar: '🌌', isMe: false },
+    { rank: 5, name: '은하수여행자', value: 43, avatar: '🌟', isMe: false },
+    { rank: 6, name: '화성정착민', value: 38, avatar: '🔴', isMe: false },
+    { rank: 7, name: '달탐험대', value: 29, avatar: '🌙', isMe: false },
   ];
 
   // 글로벌 랭킹 데이터 (탐험한 행성)
@@ -88,23 +67,13 @@ export default function HomePage({ accessToken, profile, isLoading }) {
     { rank: 7, name: '달탐험대', value: 3, avatar: '🌙', isMe: false },
   ];
 
-  // 글로벌 랭킹 데이터 (NFT 수)
-  const globalNFTRanking = [
-    { rank: 1, name: 'NFT컬렉터', value: 89, avatar: '💎', isMe: false },
-    { rank: 2, name: '보물사냥꾼', value: 67, avatar: '🏆', isMe: false },
-    { rank: 3, name: '우주탐험가123', value: 54, avatar: '🚀', isMe: false },
-    { rank: 4, name: '갤럭시헌터', value: 43, avatar: '🌌', isMe: false },
-    { rank: 5, name: '스타워즈팬', value: 38, avatar: '⭐', isMe: false },
-    { rank: 6, name: '나', value: 23, avatar: '🛸', isMe: true },
-    { rank: 7, name: '코스모스', value: 19, avatar: '🌟', isMe: false },
-  ];
 
-  // 친구 랭킹 데이터 (점수)
-  const friendsScoreRanking = [
-    { rank: 1, name: '김철수', value: 1850, avatar: '👨', isMe: false, org: 'LINE 친구' },
-    { rank: 2, name: '나', value: 1340, avatar: '🛸', isMe: true, org: 'CosmicExplorer' },
-    { rank: 3, name: '박영희', value: 1120, avatar: '👩', isMe: false, org: 'LINE 친구' },
-    { rank: 4, name: '이민수', value: 890, avatar: '👱', isMe: false, org: 'LINE 친구' },
+  // 친구 랭킹 데이터 (탐험 횟수)
+  const friendsExplorationsRanking = [
+    { rank: 1, name: '김철수', value: 85, avatar: '👨', isMe: false, org: 'LINE 친구' },
+    { rank: 2, name: '나', value: 67, avatar: '🛸', isMe: true, org: 'CosmicExplorer' },
+    { rank: 3, name: '박영희', value: 54, avatar: '👩', isMe: false, org: 'LINE 친구' },
+    { rank: 4, name: '이민수', value: 43, avatar: '👱', isMe: false, org: 'LINE 친구' },
   ];
 
   // 친구 랭킹 데이터 (탐험한 행성)
@@ -115,13 +84,6 @@ export default function HomePage({ accessToken, profile, isLoading }) {
     { rank: 4, name: '이민수', value: 2, avatar: '👱', isMe: false, org: 'LINE 친구' },
   ];
 
-  // 친구 랭킹 데이터 (NFT 수)
-  const friendsNFTRanking = [
-    { rank: 1, name: '박영희', value: 45, avatar: '👩', isMe: false, org: 'LINE 친구' },
-    { rank: 2, name: '김철수', value: 32, avatar: '👨', isMe: false, org: 'LINE 친구' },
-    { rank: 3, name: '나', value: 23, avatar: '🛸', isMe: true, org: 'CosmicExplorer' },
-    { rank: 4, name: '이민수', value: 12, avatar: '👱', isMe: false, org: 'LINE 친구' },
-  ];
 
   // 친구 리스트 데이터 (실제로는 백엔드 API에서 가져올 예정)
   const friends = [
@@ -153,15 +115,12 @@ export default function HomePage({ accessToken, profile, isLoading }) {
   ];
 
   // API 데이터를 기존 형식으로 변환
-  const transformApiDataToRankingFormat = (apiData: LeaderboardEntry[]) => {
+  const transformApiDataToRankingFormat = (apiData: LeaderboardRankingEntry[]) => {
     return apiData.map((entry) => ({
       rank: entry.rank,
-      name: entry.user.username,
+      name: entry.username,
       value: entry.score,
-      avatar: entry.metadata?.petType === 'momoco' ? '🐱' :
-              entry.metadata?.petType === 'panlulu' ? '🐼' :
-              entry.metadata?.petType === 'hoshitanu' ? '⭐' :
-              entry.metadata?.petType === 'mizuru' ? '💧' : '🚀',
+      avatar: '🚀', // 기본 아바타, 나중에 사용자 아바타 정보 추가 가능
       isMe: false // TODO: 현재 사용자와 비교해서 설정
     }));
   };
@@ -170,23 +129,28 @@ export default function HomePage({ accessToken, profile, isLoading }) {
   const getCurrentRanking = () => {
     if (activeRankingTab === 'global') {
       // API 데이터가 있으면 사용, 없으면 기본값
-      if (leaderboardData.length > 0) {
-        return transformApiDataToRankingFormat(leaderboardData);
+      if (leaderboardData) {
+        switch (activeRankingType) {
+          case 'explorations':
+            return leaderboardData.totalExplorations ? transformApiDataToRankingFormat(leaderboardData.totalExplorations) : globalExplorationsRanking;
+          case 'planets':
+            return leaderboardData.successfulExplorations ? transformApiDataToRankingFormat(leaderboardData.successfulExplorations) : globalPlanetRanking;
+          default:
+            return leaderboardData.totalExplorations ? transformApiDataToRankingFormat(leaderboardData.totalExplorations) : globalExplorationsRanking;
+        }
       }
       // 폴백: 기존 정적 데이터
       switch (activeRankingType) {
-        case 'score': return globalScoreRanking;
+        case 'explorations': return globalExplorationsRanking;
         case 'planets': return globalPlanetRanking;
-        case 'nfts': return globalNFTRanking;
-        default: return globalScoreRanking;
+        default: return globalExplorationsRanking;
       }
     } else {
       // 친구 탭은 기존 데이터 사용
       switch (activeRankingType) {
-        case 'score': return friendsScoreRanking;
+        case 'explorations': return friendsExplorationsRanking;
         case 'planets': return friendsPlanetRanking;
-        case 'nfts': return friendsNFTRanking;
-        default: return friendsScoreRanking;
+        default: return friendsExplorationsRanking;
       }
     }
   };
@@ -194,10 +158,9 @@ export default function HomePage({ accessToken, profile, isLoading }) {
   // 랭킹 타입별 단위 가져오기
   const getRankingUnit = () => {
     switch (activeRankingType) {
-      case 'score': return '점수';
+      case 'explorations': return '횟수';
       case 'planets': return '행성';
-      case 'nfts': return 'NFT';
-      default: return '점수';
+      default: return '횟수';
     }
   };
 
@@ -243,35 +206,100 @@ export default function HomePage({ accessToken, profile, isLoading }) {
       
       {/* 메인 콘텐츠 */}
       <div className="relative z-10">
-        {/* 나의 업적 섹션 */}
+        {/* 나의 우주 컬렉션 섹션 */}
         <div className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-4 mb-6 border border-slate-700/50">
           <h3 className="text-green-400 font-bold mb-4 flex items-center gap-2">
-            🎖️ 나의 우주 업적
+            🎖️ 나의 우주 컬렉션
           </h3>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-slate-700/50 rounded-xl p-3 text-center border border-slate-600/30">
+          {/* 탐험 통계 */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-xl p-3 text-center border border-blue-500/30">
+              <div className="text-2xl mb-1">🚀</div>
+              <div className="font-bold text-white">67</div>
+              <div className="text-xs text-blue-400">총 탐험 횟수</div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-green-600/20 to-emerald-600/20 rounded-xl p-3 text-center border border-green-500/30">
               <div className="text-2xl mb-1">🌍</div>
               <div className="font-bold text-white">5</div>
-              <div className="text-xs text-gray-400">탐험한 행성</div>
+              <div className="text-xs text-green-400">정복한 행성</div>
             </div>
-            
-            <div className="bg-slate-700/50 rounded-xl p-3 text-center border border-slate-600/30">
-              <div className="text-2xl mb-1">🎁</div>
-              <div className="font-bold text-white">23</div>
-              <div className="text-xs text-gray-400">수집한 NFT</div>
+          </div>
+
+          {/* 획득한 행성 NFT 카드들 */}
+          <div className="mb-3">
+            <h4 className="text-sm font-medium text-gray-300 mb-2">🎁 획득한 행성 NFT</h4>
+          </div>
+          
+          <div className="flex gap-3 overflow-x-auto pb-2" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
+            {/* 달 NFT */}
+            <div className="min-w-[120px] bg-gradient-to-br from-gray-400/20 to-gray-600/20 rounded-xl p-3 border border-gray-500/30 flex-shrink-0">
+              <div className="text-center">
+                <div className="text-3xl mb-2">🌙</div>
+                <div className="text-sm font-bold text-white">달</div>
+                <div className="text-xs text-gray-400">기본 NFT</div>
+                <div className="text-xs text-yellow-400 mt-1">완료</div>
+              </div>
             </div>
-            
-            <div className="bg-slate-700/50 rounded-xl p-3 text-center border border-slate-600/30">
-              <div className="text-2xl mb-1">⭐</div>
-              <div className="font-bold text-white">2,340</div>
-              <div className="text-xs text-gray-400">총 점수</div>
+
+            {/* 화성 NFT */}
+            <div className="min-w-[120px] bg-gradient-to-br from-red-500/20 to-orange-600/20 rounded-xl p-3 border border-red-500/30 flex-shrink-0">
+              <div className="text-center">
+                <div className="text-3xl mb-2">🔴</div>
+                <div className="text-sm font-bold text-white">화성</div>
+                <div className="text-xs text-gray-400">기본 NFT</div>
+                <div className="text-xs text-yellow-400 mt-1">완료</div>
+              </div>
             </div>
-            
-            <div className="bg-slate-700/50 rounded-xl p-3 text-center border border-slate-600/30">
-              <div className="text-2xl mb-1">👥</div>
-              <div className="font-bold text-white">12</div>
-              <div className="text-xs text-gray-400">우주 친구</div>
+
+            {/* 타이탄 NFT */}
+            <div className="min-w-[120px] bg-gradient-to-br from-blue-500/20 to-cyan-600/20 rounded-xl p-3 border border-blue-500/30 flex-shrink-0">
+              <div className="text-center">
+                <div className="text-3xl mb-2">🌊</div>
+                <div className="text-sm font-bold text-white">타이탄</div>
+                <div className="text-xs text-gray-400">기본 NFT</div>
+                <div className="text-xs text-yellow-400 mt-1">완료</div>
+              </div>
+            </div>
+
+            {/* 유로파 NFT */}
+            <div className="min-w-[120px] bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-xl p-3 border border-cyan-500/30 flex-shrink-0">
+              <div className="text-center">
+                <div className="text-3xl mb-2">💧</div>
+                <div className="text-sm font-bold text-white">유로파</div>
+                <div className="text-xs text-gray-400">기본 NFT</div>
+                <div className="text-xs text-yellow-400 mt-1">완료</div>
+              </div>
+            </div>
+
+            {/* 토성 NFT */}
+            <div className="min-w-[120px] bg-gradient-to-br from-purple-500/20 to-pink-600/20 rounded-xl p-3 border border-purple-500/30 flex-shrink-0">
+              <div className="text-center">
+                <div className="text-3xl mb-2">🌀</div>
+                <div className="text-sm font-bold text-white">토성</div>
+                <div className="text-xs text-orange-400">희귀 NFT</div>
+                <div className="text-xs text-yellow-400 mt-1">완료</div>
+              </div>
+            </div>
+
+            {/* 잠긴 행성들 - 미리보기 */}
+            <div className="min-w-[120px] bg-gradient-to-br from-gray-700/30 to-gray-800/30 rounded-xl p-3 border border-gray-600/30 flex-shrink-0 opacity-60">
+              <div className="text-center">
+                <div className="text-3xl mb-2">🥶</div>
+                <div className="text-sm font-bold text-gray-400">천왕성</div>
+                <div className="text-xs text-gray-500">희귀 NFT</div>
+                <div className="text-xs text-gray-500 mt-1">미획득</div>
+              </div>
+            </div>
+
+            <div className="min-w-[120px] bg-gradient-to-br from-gray-700/30 to-gray-800/30 rounded-xl p-3 border border-gray-600/30 flex-shrink-0 opacity-60">
+              <div className="text-center">
+                <div className="text-3xl mb-2">🧊</div>
+                <div className="text-sm font-bold text-gray-400">트리톤</div>
+                <div className="text-xs text-gray-500">희귀 NFT</div>
+                <div className="text-xs text-gray-500 mt-1">미획득</div>
+              </div>
             </div>
           </div>
         </div>
@@ -311,14 +339,14 @@ export default function HomePage({ accessToken, profile, isLoading }) {
           {/* 랭킹 타입 선택 */}
           <div className="flex bg-slate-700/30 rounded-xl p-1 mb-4 border border-slate-600/30">
             <button
-              onClick={() => setActiveRankingType('score')}
+              onClick={() => setActiveRankingType('explorations')}
               className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                activeRankingType === 'score'
+                activeRankingType === 'explorations'
                   ? 'bg-blue-600 text-white shadow-lg'
                   : 'text-gray-300 hover:text-white'
               }`}
             >
-              총 점수
+              탐험 횟수
             </button>
             <button
               onClick={() => setActiveRankingType('planets')}
@@ -328,17 +356,7 @@ export default function HomePage({ accessToken, profile, isLoading }) {
                   : 'text-gray-300 hover:text-white'
               }`}
             >
-              탐험 행성
-            </button>
-            <button
-              onClick={() => setActiveRankingType('nfts')}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                activeRankingType === 'nfts'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              NFT 수
+              탐험 행성 수
             </button>
           </div>
 
@@ -403,9 +421,7 @@ export default function HomePage({ accessToken, profile, isLoading }) {
 
                 {/* 점수/값 */}
                 <div className="text-right">
-                  <div className="font-bold text-blue-400">{
-                    activeRankingType === 'score' ? user.value.toLocaleString() : user.value
-                  }</div>
+                  <div className="font-bold text-blue-400">{user.value.toLocaleString()}</div>
                   <div className="text-xs text-gray-400">{getRankingUnit()}</div>
                 </div>
 

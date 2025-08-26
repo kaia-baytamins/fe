@@ -37,7 +37,7 @@ export const API_CONFIG = {
     USER_UPDATE_WALLET: '/users/wallet-address',
     
     // Leaderboard endpoints
-    LEADERBOARD: '/leaderboard',
+    LEADERBOARD: '/leaderboard/rankings',
     LEADERBOARD_TOP_PERFORMERS: '/leaderboard/top-performers',
     
     // Inventory endpoints

@@ -45,6 +45,7 @@ export default function LaunchPad({ setActiveSection, profile }: LaunchPadProps)
   // 실제 장착된 아이템들을 배열로 변환
   const getEquippedItemsArray = () => {
     const equipped = [];
+    // SpaceshipMaintenance와 동일한 매핑 구조 사용
     const categoryMapping = {
       engine: { name: '엔진', icon: '⚙️' },
       material: { name: '재질', icon: '🛠️' },  
@@ -54,6 +55,13 @@ export default function LaunchPad({ setActiveSection, profile }: LaunchPadProps)
 
     Object.entries(categoryMapping).forEach(([key, category]) => {
       const equippedItem = equippedItems[key];
+      console.log(`🔍 발사소에서 ${key} 체크:`, {
+        key,
+        equippedItem,
+        hasItemId: equippedItem?.itemId,
+        itemInfo: equippedItem?.itemId ? getItemById(equippedItem.itemId) : null
+      });
+      
       if (equippedItem && equippedItem.itemId) {
         const itemInfo = getItemById(equippedItem.itemId);
         if (itemInfo) {
@@ -81,6 +89,13 @@ export default function LaunchPad({ setActiveSection, profile }: LaunchPadProps)
 
   const equippedItemsArray = getEquippedItemsArray();
   const spaceshipScore = equippedItemsArray.reduce((total, item) => total + item.score, 0);
+  
+  // 디버깅용 로그
+  console.log('🚀 발사소 전체 상태:', {
+    equippedItems,
+    equippedItemsArray,
+    spaceshipScore
+  });
 
   const planets = [
     {
