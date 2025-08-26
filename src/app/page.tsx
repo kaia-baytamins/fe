@@ -94,7 +94,7 @@ export default function Home() {
       case 'home':
         return <HomeContent {...commonProps} />;
       case 'explore':
-        return <ExploreContent />;
+        return <ExploreContent profile={profile} />;
       case 'market':
         return <MarketContent />;
       case 'quest':

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { inventoryService, InventoryResponse } from '@/services/inventoryService';
 
 interface SpaceshipMaintenanceProps {
-  setActiveSection: (section: 'launchpad' | 'pet' | 'maintenance') => void;
+  setActiveSection: (section: 'launchpad' | 'maintenance') => void;
 }
 
 type ItemCategory = 'engine' | 'material' | 'special' | 'fuel';
@@ -190,12 +190,6 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
           className="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-full text-white font-medium transition-colors"
         >
           🚀 발사소
-        </button>
-        <button 
-          onClick={() => setActiveSection('pet')}
-          className="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-full text-white font-medium transition-colors"
-        >
-          🐕 펫 훈련
         </button>
         <button 
           onClick={() => setActiveSection('maintenance')}

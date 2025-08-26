@@ -1,29 +1,85 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { inventoryService } from '@/services/inventoryService';
 
 interface LaunchPadProps {
-  setActiveSection: (section: 'launchpad' | 'pet' | 'maintenance') => void;
+  setActiveSection: (section: 'launchpad' | 'maintenance') => void;
+  profile?: any; // LIFF 프로필 정보
 }
 
-export default function LaunchPad({ setActiveSection }: LaunchPadProps) {
+export default function LaunchPad({ setActiveSection, profile }: LaunchPadProps) {
   const [selectedPlanet, setSelectedPlanet] = useState<number | null>(null);
   const [showLaunchModal, setShowLaunchModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showFeedModal, setShowFeedModal] = useState(false);
+  const [showTrainModal, setShowTrainModal] = useState(false);
 
-  // 임시 데이터
-  const currentSpaceshipScore = {
-    fuel: 230,
-    defense: 80,
-    totalScore: 310
+  // 펫 점수 데이터 (state로 변경)
+  const [petStats, setPetStats] = useState({
+    health: 30, // 체력
+    agility: 20, // 민첩성
+    intelligence: 30, // 지능
+  });
+
+  // 펫 아이템 보유량 (state로 변경)
+  const [petItems, setPetItems] = useState({
+    food: 5, // 사료 개수
+    toy: 3,  // 장난감 개수
+  });
+
+  // 실제 장착된 아이템 데이터
+  const [equippedItems, setEquippedItems] = useState<any>({});
+  const [itemsData, setItemsData] = useState<any[]>([]);
+  const [isLoadingEquipped, setIsLoadingEquipped] = useState(true);
+
+  // 테스트용 지갑 주소 (SpaceshipMaintenance와 동일)
+  const testWalletAddress = '0x1234567890123456789012345678901234567890';
+
+  // 아이템 ID로 아이템 정보 찾기
+  const getItemById = (itemId: number) => {
+    return itemsData.find(item => item.id === itemId);
   };
 
-  const equippedItems = [
-    { type: '엔진', name: '터보 엔진 V3', score: 150, icon: '⚙️' },
-    { type: '연료통', name: '빈 통닫', score: 0, icon: '⛽', isEmpty: true },
-    { type: '방어막', name: '강화유리', score: 80, icon: '🛡️' },
-    { type: '특수장비', name: '특수장비', score: 0, icon: '⚡', isEmpty: true },
-  ];
+  // 실제 장착된 아이템들을 배열로 변환
+  const getEquippedItemsArray = () => {
+    const equipped = [];
+    const categoryMapping = {
+      engine: { name: '엔진', icon: '⚙️' },
+      material: { name: '재질', icon: '🛠️' },  
+      specialEquipment: { name: '특수장비', icon: '⚡' },
+      fuelTank: { name: '연료', icon: '⛽' }
+    };
+
+    Object.entries(categoryMapping).forEach(([key, category]) => {
+      const equippedItem = equippedItems[key];
+      if (equippedItem && equippedItem.itemId) {
+        const itemInfo = getItemById(equippedItem.itemId);
+        if (itemInfo) {
+          equipped.push({
+            type: category.name,
+            name: itemInfo.name,
+            score: itemInfo.score,
+            icon: category.icon,
+            isEmpty: false
+          });
+        }
+      } else {
+        equipped.push({
+          type: category.name,
+          name: category.name,
+          score: 0,
+          icon: category.icon,
+          isEmpty: true
+        });
+      }
+    });
+
+    return equipped;
+  };
+
+  const equippedItemsArray = getEquippedItemsArray();
+  const spaceshipScore = equippedItemsArray.reduce((total, item) => total + item.score, 0);
 
   const planets = [
     { 
@@ -33,7 +89,7 @@ export default function LaunchPad({ setActiveSection }: LaunchPadProps) {
       icon: '🌙', 
       unlocked: true,
       title: "액체 메탄 바다 탐험",
-      description: "두꺼운 대기와 메탄 호수(액체 상태의 메탄과 에탄)가 존재. 지구와 유사한 환경을 가진 곳으로, 생명체 가능성이 연구되고 있음. 게임에서는 \"액체 메탄 바다 탐험\"으로 설정 기능.",
+      description: "두꺼운 대기와 메탄 호수(액체 상태의 메탄과 에탄)가 존재해. 지구와 유사한 환경을 가진 곳으로, 생명체 가능성이 연구되고 있어",
       rewardType: "기본 NFT"
     },
     { 
@@ -43,7 +99,7 @@ export default function LaunchPad({ setActiveSection }: LaunchPadProps) {
       icon: '🔴', 
       unlocked: true,
       title: "붉은 사막의 비밀 탐사",
-      description: "화성의 붉은 사막에는 과거 물이 흘렀던 흔적들이 남아있어! 지하에 얼음이 존재하고, 미생물의 흔적을 찾을 수 있을지도 몰라.",
+      description: "화성의 붉은 사막에는 과거 물이 흘렀던 흔적들이 남아있어! 지하에 얼음이 존재하고, 미생물의 흔적을 찾을 수 있을지도 몰라",
       rewardType: "희귀 NFT"
     },
     { 
@@ -89,7 +145,7 @@ export default function LaunchPad({ setActiveSection }: LaunchPadProps) {
   ];
 
   const handleLaunch = () => {
-    if (selectedPlanet && currentSpaceshipScore.totalScore >= planets.find(p => p.id === selectedPlanet)!.requiredScore) {
+    if (selectedPlanet && spaceshipScore >= planets.find(p => p.id === selectedPlanet)!.requiredScore) {
       setShowLaunchModal(false);
       setShowConfirmModal(true);
     }
@@ -103,6 +159,85 @@ export default function LaunchPad({ setActiveSection }: LaunchPadProps) {
     // 여기에 실제 탐험 로직 추가 (컨트랙트 호출 등)
   };
 
+  // 데이터 로드
+  useEffect(() => {
+    loadItemsData();
+    fetchEquippedItems();
+  }, []);
+
+  // items.json 데이터 로드
+  const loadItemsData = async () => {
+    try {
+      const response = await fetch('/asset/items.json'); 
+      const data = await response.json(); 
+      setItemsData(data.items || []); 
+      console.log('📜 아이템 데이터 로드:', data.items); 
+    } catch (error) {
+      console.error('Failed to load items data:', error);
+    }
+  };
+
+  const fetchEquippedItems = async () => {
+    try {
+      setIsLoadingEquipped(true);
+      const equipped = await inventoryService.getEquippedItems(testWalletAddress);
+      setEquippedItems(equipped?.equipment || {});
+      console.log('🔧 발사소에서 장착된 아이템 데이터:', equipped);
+    } catch (error) {
+      console.error('Failed to fetch equipped items:', error);
+      setEquippedItems({});
+    } finally {
+      setIsLoadingEquipped(false);
+    }
+  };
+
+  const handleFeedPet = () => {
+    if (petItems.food <= 0) {
+      alert('사료가 부족합니다!');
+      return;
+    }
+    console.log('🍖 펫에게 사료 주기');
+    
+    // 사료 개수 감소
+    setPetItems(prev => ({
+      ...prev,
+      food: prev.food - 1
+    }));
+    
+    // 체력 증가
+    setPetStats(prev => ({
+      ...prev,
+      health: prev.health + 5
+    }));
+    
+    setShowFeedModal(true);
+    // TODO: API 호출로 펫 사료 주기 구현
+  };
+
+  const handleTrainPet = () => {
+    if (petItems.toy <= 0) {
+      alert('장난감이 부족합니다!');
+      return;
+    }
+    console.log('💪 펫 훈련하기');
+    
+    // 장난감 개수 감소
+    setPetItems(prev => ({
+      ...prev,
+      toy: prev.toy - 1
+    }));
+    
+    // 민첩성과 지능 증가
+    setPetStats(prev => ({
+      ...prev,
+      agility: prev.agility + 3,
+      intelligence: prev.intelligence + 2
+    }));
+    
+    setShowTrainModal(true);
+    // TODO: API 호출로 펫 훈련 구현
+  };
+
   return (
     <div className="p-4 space-y-6">
       {/* 네비게이션 버튼들 */}
@@ -114,12 +249,6 @@ export default function LaunchPad({ setActiveSection }: LaunchPadProps) {
           🚀 발사소
         </button>
         <button 
-          onClick={() => setActiveSection('pet')}
-          className="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-full text-white font-medium transition-colors"
-        >
-          🐕 펫 훈련
-        </button>
-        <button 
           onClick={() => setActiveSection('maintenance')}
           className="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-full text-white font-medium transition-colors"
         >
@@ -127,7 +256,78 @@ export default function LaunchPad({ setActiveSection }: LaunchPadProps) {
         </button>
       </div>
 
-      {/* 현재 우주선 상태 */}
+      {/* 우주친구 상태 */}
+      <div className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-green-400 font-bold flex items-center gap-2">
+            🌟 나 {profile?.displayName || '탐험가'}의 우주 탐험을 도와줄 준비가 되었어!
+          </h2>
+        </div>
+        
+        {/* 펫 캐릭터 이미지 */}
+        <div className="text-center mb-4">
+          <div className="w-32 h-32 mx-auto rounded-full overflow-hidden bg-gradient-to-br from-purple-400 to-blue-500 p-1">
+            <img 
+              src="/images/hoshitanu.png" 
+              alt="Hoshitanu" 
+              className="w-full h-full rounded-full object-cover"
+            />
+          </div>
+          <div className="text-sm text-gray-300 mt-2 font-medium">호시타누</div>
+        </div>
+        
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-red-400">{petStats.health}</div>
+            <div className="text-sm text-gray-300">체력</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-yellow-400">{petStats.agility}</div>
+            <div className="text-sm text-gray-300">민첩성</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-400">{petStats.intelligence}</div>
+            <div className="text-sm text-gray-300">지능</div>
+          </div>
+        </div>
+        
+        {/* 펫 관리 버튼들 */}
+        <div className="space-y-3">
+          <button 
+            onClick={() => handleFeedPet()}
+            className={`w-full font-medium py-3 px-4 rounded-xl transition-colors flex flex-col items-center justify-center gap-1 ${
+              petItems.food > 0 
+                ? 'bg-green-600 hover:bg-green-700 text-white' 
+                : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+            }`}
+            disabled={petItems.food <= 0}
+          >
+            <div className="flex items-center gap-2">
+              <span>🍖 사료주기</span>
+              <span className="bg-white/20 text-xs px-2 py-1 rounded-full">{petItems.food}</span>
+            </div>
+            <div className="text-xs opacity-80">체력이 랜덤으로 증가합니다</div>
+          </button>
+          
+          <button 
+            onClick={() => handleTrainPet()}
+            className={`w-full font-medium py-3 px-4 rounded-xl transition-colors flex flex-col items-center justify-center gap-1 ${
+              petItems.toy > 0 
+                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+            }`}
+            disabled={petItems.toy <= 0}
+          >
+            <div className="flex items-center gap-2">
+              <span>🎾 훈련하기</span>
+              <span className="bg-white/20 text-xs px-2 py-1 rounded-full">{petItems.toy}</span>
+            </div>
+            <div className="text-xs opacity-80">민첩성과 지능이 랜덤으로 증가합니다</div>
+          </button>
+        </div>
+      </div>
+
+      {/* 우주선 상태 */}
       <div className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-green-400 font-bold flex items-center gap-2">
@@ -135,23 +335,11 @@ export default function LaunchPad({ setActiveSection }: LaunchPadProps) {
           </h2>
         </div>
         
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-yellow-400">{currentSpaceshipScore.fuel}</div>
-            <div className="text-sm text-gray-300">추진력</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-400">{currentSpaceshipScore.defense}</div>
-            <div className="text-sm text-gray-300">방어력</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-400">{currentSpaceshipScore.totalScore}</div>
-            <div className="text-sm text-gray-300">종합점수</div>
-          </div>
+        <div className="text-center text-2xl font-bold text-purple-400 mb-4">
+          {spaceshipScore} 점
         </div>
-
         <div className="text-center text-sm text-gray-400 mb-4">
-          🟡 우수 🟢 엔진 일부 기능
+          장착된 아이템 점수의 합산
         </div>
 
         {/* 탐험 시 주의사항 */}
@@ -161,13 +349,16 @@ export default function LaunchPad({ setActiveSection }: LaunchPadProps) {
             탐험 시작하면 현재 장착된 모든 NFT가 소각됩니다.
           </div>
           <div className="space-y-1">
-            {equippedItems.filter(item => !item.isEmpty).map((item, idx) => (
+            {equippedItemsArray.filter(item => !item.isEmpty).map((item, idx) => (
               <div key={idx} className="flex items-center gap-2 text-xs text-gray-300">
                 <span>{item.icon}</span>
                 <span>{item.name}</span>
                 <span className="text-yellow-400">(+{item.score})</span>
               </div>
             ))}
+            {equippedItemsArray.filter(item => !item.isEmpty).length === 0 && (
+              <div className="text-xs text-gray-500">장착된 아이템이 없습니다</div>
+            )}
           </div>
         </div>
 
@@ -194,13 +385,13 @@ export default function LaunchPad({ setActiveSection }: LaunchPadProps) {
             </div>
             
             <div className="text-center text-xs text-gray-300 mb-3">
-              현재 스펙: {currentSpaceshipScore.totalScore}점
+              현재 스펙: {spaceshipScore}점
             </div>
             
             <div className="grid grid-cols-2 gap-2 mb-3 overflow-y-auto flex-1 max-h-64">
               {planets.slice(0, 6).map((planet) => {
-                const canExplore = planet.unlocked && currentSpaceshipScore.totalScore >= planet.requiredScore;
-                const isLocked = !planet.unlocked || currentSpaceshipScore.totalScore < planet.requiredScore;
+                const canExplore = planet.unlocked && spaceshipScore >= planet.requiredScore;
+                const isLocked = !planet.unlocked || spaceshipScore < planet.requiredScore;
                 const isSelected = selectedPlanet === planet.id;
                 
                 return (
@@ -246,16 +437,16 @@ export default function LaunchPad({ setActiveSection }: LaunchPadProps) {
 
             {/* 선택된 행성 정보 */}
             {selectedPlanet && (
-              <div className="bg-slate-700/50 p-3 rounded-lg mb-3 max-h-28 overflow-y-auto">
+              <div className="bg-slate-700/50 p-4 rounded-lg mb-3 max-h-40 overflow-y-auto">
                 {(() => {
                   const planet = planets.find(p => p.id === selectedPlanet);
                   return planet ? (
                     <div>
-                      <h4 className="font-bold text-blue-400 mb-1 text-xs">
+                      <h4 className="font-bold text-blue-400 mb-2 text-sm">
                         {planet.icon} {planet.title}
                       </h4>
-                      <p className="text-xs text-gray-300 leading-tight">
-                        {planet.description.substring(0, 80)}...
+                      <p className="text-sm text-gray-300 leading-relaxed">
+                        {planet.description}
                       </p>
                     </div>
                   ) : null;
@@ -272,7 +463,7 @@ export default function LaunchPad({ setActiveSection }: LaunchPadProps) {
               </button>
               <button
                 onClick={handleLaunch}
-                disabled={!selectedPlanet || (selectedPlanet && (planets.find(p => p.id === selectedPlanet)?.unlocked === false || currentSpaceshipScore.totalScore < planets.find(p => p.id === selectedPlanet)!.requiredScore))}
+                disabled={!selectedPlanet || (selectedPlanet && (planets.find(p => p.id === selectedPlanet)?.unlocked === false || spaceshipScore < planets.find(p => p.id === selectedPlanet)!.requiredScore))}
                 className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:opacity-50 text-white py-2 rounded-lg font-medium transition-colors text-xs"
               >
                 🚀 발사!
@@ -305,13 +496,16 @@ export default function LaunchPad({ setActiveSection }: LaunchPadProps) {
             <div className="bg-red-900/20 border border-red-500/30 rounded-xl p-4 mb-6">
               <h4 className="text-red-400 font-medium mb-3 text-sm">🔥 소각될 아이템:</h4>
               <div className="space-y-2">
-                {equippedItems.filter(item => !item.isEmpty).map((item, idx) => (
+                {equippedItemsArray.filter(item => !item.isEmpty).map((item, idx) => (
                   <div key={idx} className="flex items-center gap-2 text-sm">
                     <span>{item.icon}</span>
                     <span className="text-gray-300">{item.name}</span>
                     <span className="text-yellow-400 ml-auto">(+{item.score})</span>
                   </div>
                 ))}
+                {equippedItemsArray.filter(item => !item.isEmpty).length === 0 && (
+                  <div className="text-sm text-gray-500">장착된 아이템이 없습니다</div>
+                )}
               </div>
             </div>
 
@@ -329,6 +523,66 @@ export default function LaunchPad({ setActiveSection }: LaunchPadProps) {
                 🚀 탐험 시작!
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 사료주기 모달 */}
+      {showFeedModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
+          <div className="bg-slate-800 rounded-2xl p-6 max-w-sm w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden bg-gradient-to-br from-purple-400 to-blue-500 p-1">
+                <img 
+                  src="/images/hoshitanu.png" 
+                  alt="Hoshitanu" 
+                  className="w-full h-full rounded-full object-cover"
+                />
+              </div>
+              <h3 className="text-lg font-bold text-green-400 mb-2">
+                움냠냠!! 맛있다! 너무 고마워!
+              </h3>
+              <p className="text-sm text-gray-300">
+                🍖 덕분에 체력이 <span className="text-green-400 font-bold">+5</span> 늘었어!
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowFeedModal(false)}
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-medium transition-colors"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 훈련하기 모달 */}
+      {showTrainModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
+          <div className="bg-slate-800 rounded-2xl p-6 max-w-sm w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden bg-gradient-to-br from-purple-400 to-blue-500 p-1">
+                <img 
+                  src="/images/hoshitanu.png" 
+                  alt="Hoshitanu" 
+                  className="w-full h-full rounded-full object-cover"
+                />
+              </div>
+              <h3 className="text-lg font-bold text-blue-400 mb-2">
+                열심히 훈련했어! 고마워!
+              </h3>
+              <p className="text-sm text-gray-300">
+                💪 덕분에 민첩성이 <span className="text-yellow-400 font-bold">+3</span>, 지능이 <span className="text-blue-400 font-bold">+2</span> 늘었어!
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowTrainModal(false)}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-colors"
+            >
+              확인
+            </button>
           </div>
         </div>
       )}

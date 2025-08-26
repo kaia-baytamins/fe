@@ -3,24 +3,25 @@
 import { useState } from 'react';
 import StarBackground from '@/components/explore/StarBackground';
 import LaunchPad from '@/components/explore/LaunchPad';
-import PetTraining from '@/components/explore/PetTraining';
 import SpaceshipMaintenance from '@/components/explore/SpaceshipMaintenance';
 
-type ExploreSection = 'launchpad' | 'pet' | 'maintenance';
+type ExploreSection = 'launchpad' | 'maintenance';
 
-export default function ExplorePage() {
+interface ExplorePageProps {
+  profile?: any;
+}
+
+export default function ExplorePage({ profile }: ExplorePageProps) {
   const [activeSection, setActiveSection] = useState<ExploreSection>('launchpad');
 
   const renderSection = () => {
     switch (activeSection) {
       case 'launchpad':
-        return <LaunchPad setActiveSection={setActiveSection} />;
-      case 'pet':
-        return <PetTraining setActiveSection={setActiveSection} />;
+        return <LaunchPad setActiveSection={setActiveSection} profile={profile} />;
       case 'maintenance':
         return <SpaceshipMaintenance setActiveSection={setActiveSection} />;
       default:
-        return <LaunchPad setActiveSection={setActiveSection} />;
+        return <LaunchPad setActiveSection={setActiveSection} profile={profile} />;
     }
   };
 
