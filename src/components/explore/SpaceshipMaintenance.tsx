@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { inventoryService, InventoryResponse } from '@/services/inventoryService';
 
 interface SpaceshipMaintenanceProps {
   setActiveSection: (section: 'launchpad' | 'pet' | 'maintenance') => void;
@@ -13,6 +14,68 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [showSellModal, setShowSellModal] = useState(false);
   const [sellPrice, setSellPrice] = useState('');
+  const [inventoryData, setInventoryData] = useState<InventoryResponse | null>(null);
+  const [isLoadingInventory, setIsLoadingInventory] = useState(true);
+  const [inventoryError, setInventoryError] = useState<string | null>(null);
+  const [itemsData, setItemsData] = useState<any[]>([]);
+
+  // 테스트용 지갑 주소
+  const testWalletAddress = '0x1234567890123456789012345678901234567890';
+
+  // 아이템 데이터 및 인벤토리 데이터 가져오기
+  useEffect(() => {
+    loadItemsData();
+    fetchInventoryData();
+  }, []);
+
+  // items.json 데이터 로드
+  const loadItemsData = async () => {
+    try {
+      const response = await fetch('/asset/items.json');
+      const data = await response.json();
+      setItemsData(data.items || []);
+      console.log('📜 아이템 데이터 로드:', data.items);
+    } catch (error) {
+      console.error('Failed to load items data:', error);
+    }
+  };
+
+  const fetchInventoryData = async () => {
+    try {
+      setIsLoadingInventory(true);
+      setInventoryError(null);
+      
+      const data = await inventoryService.getInventoryByWallet(testWalletAddress);
+      setInventoryData(data);
+      
+      console.log('📦 API 응답 받은 인벤토리 데이터:', data);
+    } catch (error) {
+      console.error('Failed to fetch inventory:', error);
+      setInventoryError('인벤토리를 불러올 수 없습니다');
+    } finally {
+      setIsLoadingInventory(false);
+    }
+  };
+
+  // API 인벤토리와 아이템 정보 매칭
+  const getInventoryWithDetails = () => {
+    if (!inventoryData || !itemsData.length) return [];
+    
+    return inventoryService.getInventoryItemsArray(inventoryData)
+      .map(({ itemId, quantity }) => {
+        const itemInfo = itemsData.find(item => item.id === parseInt(itemId));
+        return {
+          id: parseInt(itemId),
+          name: itemInfo?.name || `Unknown Item ${itemId}`,
+          score: itemInfo?.score || 0,
+          icon: '⚙️', // 기본 아이콘
+          rarity: 'common', // 기본 등급
+          quantity,
+          found: !!itemInfo
+        };
+      })
+      .filter(item => item.quantity > 0); // 개수가 0보다 큰 것만
+  };
 
   // 현재 장착된 아이템들
   const equippedItems = {
@@ -158,7 +221,7 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
         </div>
       </div>
 
-      {/* 인벤토리 섹션 */}
+      {/* 기존 인벤토리 섹션 (하드코딩) */}
       <div className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-4">
         <h2 className="text-xl font-bold text-red-400 mb-4">🎒 인벤토리</h2>
         
@@ -180,17 +243,18 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
           ))}
         </div>
 
-        {/* 아이템 목록 */}
+        {/* 아이템 목록 - API 데이터 사용 */}
         <div className="space-y-3">
-          {inventoryItems[selectedCategory].map((item) => (
+          {getInventoryWithDetails().map((item) => (
             <div key={item.id} className={`p-4 rounded-xl border-2 ${getRarityColor(item.rarity)}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{item.icon}</span>
                   <div>
-                    <div className="font-medium">{item.name}</div>
-                    <div className="text-sm text-gray-400">추진력 +{item.score}</div>
+                    <div className="font-medium text-white">{item.name}</div>
+                    <div className="text-sm text-gray-400">스코어 +{item.score}</div>
                     <div className="text-xs text-yellow-400 capitalize">{item.rarity} NFT</div>
+                    <div className="text-xs text-blue-400">보유: x{item.quantity}</div>
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -211,9 +275,9 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
             </div>
           ))}
           
-          {inventoryItems[selectedCategory].length === 0 && (
+          {getInventoryWithDetails().length === 0 && (
             <div className="text-center py-8 text-gray-400">
-              이 카테고리에 아이템이 없습니다
+              {isLoadingInventory ? '인벤토리 로딩 중...' : '보유한 아이템이 없습니다'}
             </div>
           )}
         </div>
