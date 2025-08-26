@@ -119,6 +119,55 @@ export default function QuestPage() {
     return quests.filter(quest => quest.type === type);
   };
 
+  // Helper function to get reward display info
+  const getRewardDisplay = (quest: Quest) => {
+    // Check for items first (our new reward structure)
+    if (quest.rewards.items && quest.rewards.items.length > 0) {
+      const firstItem = quest.rewards.items[0];
+      const rewardName = firstItem.name || '장비';
+      const rarityText = firstItem.rarity === 'common' ? '기본 등급' :
+                        firstItem.rarity === 'rare' ? '희귀 등급' :
+                        firstItem.rarity === 'epic' ? '에픽 등급' :
+                        firstItem.rarity === 'legendary' ? '레전더리 등급' :
+                        firstItem.rarity === 'rare-epic' ? '희귀-에픽 등급' :
+                        firstItem.rarity === 'epic-legendary' ? '에픽-레전더리 등급' :
+                        '특별';
+      
+      // If multiple items, show count
+      if (quest.rewards.items.length > 1) {
+        return {
+          name: `${rewardName} ${quest.rewards.items.length}개`,
+          value: `${rarityText} 보상`
+        };
+      }
+      
+      return {
+        name: rewardName,
+        value: rarityText
+      };
+    }
+    
+    // Fallback to other reward types
+    if (quest.rewards.kaiaAmount) {
+      return {
+        name: `${quest.rewards.kaiaAmount} KAIA`,
+        value: quest.rewards.experience ? `경험치 +${quest.rewards.experience}` : '즉시 지급'
+      };
+    }
+    
+    if (quest.rewards.nftTokenId) {
+      return {
+        name: quest.rewards.nftTokenId,
+        value: quest.rewards.experience ? `경험치 +${quest.rewards.experience}` : 'NFT 보상'
+      };
+    }
+    
+    return {
+      name: '보상',
+      value: quest.rewards.experience ? `경험치 +${quest.rewards.experience}` : '특별 보상'
+    };
+  };
+
   // Helper function to handle quest action (start/claim)
   const handleQuestAction = async (quest: Quest) => {
     const progress = getQuestProgressById(quest.id);
@@ -237,6 +286,8 @@ export default function QuestPage() {
                     buttonDisabled = false;
                   }
 
+                  const rewardInfo = getRewardDisplay(quest);
+
                   return (
                     <QuestCard
                       key={quest.id}
@@ -247,8 +298,8 @@ export default function QuestPage() {
                       maxProgress={maxProgress}
                       progressText={`${currentProgress}/${maxProgress} 완료`}
                       rewardIcon="💰"
-                      rewardName={quest.rewards.kaiaAmount ? `${quest.rewards.kaiaAmount} KAIA` : quest.rewards.nftTokenId || '보상'}
-                      rewardValue={quest.rewards.experience ? `경험치 +${quest.rewards.experience}` : '즉시 지급'}
+                      rewardName={rewardInfo.name}
+                      rewardValue={rewardInfo.value}
                       status={status}
                       buttonText={buttonText}
                       buttonDisabled={buttonDisabled || actionLoading}
@@ -305,6 +356,8 @@ export default function QuestPage() {
                     buttonDisabled = false;
                   }
 
+                  const rewardInfo = getRewardDisplay(quest);
+
                   return (
                     <QuestCard
                       key={quest.id}
@@ -315,8 +368,8 @@ export default function QuestPage() {
                       maxProgress={maxProgress}
                       progressText={`${currentProgress}/${maxProgress} 완료`}
                       rewardIcon="🔥"
-                      rewardName={quest.rewards.kaiaAmount ? `${quest.rewards.kaiaAmount} KAIA` : quest.rewards.nftTokenId || '희귀 보상'}
-                      rewardValue={quest.rewards.experience ? `경험치 +${quest.rewards.experience}` : '주간 보상'}
+                      rewardName={rewardInfo.name}
+                      rewardValue={rewardInfo.value}
                       status={status}
                       buttonText={buttonText}
                       buttonDisabled={buttonDisabled || actionLoading}
@@ -374,6 +427,8 @@ export default function QuestPage() {
                     buttonDisabled = false;
                   }
 
+                  const rewardInfo = getRewardDisplay(quest);
+
                   return (
                     <QuestCard
                       key={quest.id}
@@ -384,8 +439,8 @@ export default function QuestPage() {
                       maxProgress={maxProgress}
                       progressText={`${currentProgress}/${maxProgress} 완료`}
                       rewardIcon="⚡"
-                      rewardName={quest.rewards.kaiaAmount ? `${quest.rewards.kaiaAmount} KAIA` : quest.rewards.nftTokenId || '전설 보상'}
-                      rewardValue={quest.rewards.experience ? `경험치 +${quest.rewards.experience}` : '특별 보상'}
+                      rewardName={rewardInfo.name}
+                      rewardValue={rewardInfo.value}
                       status={status}
                       buttonText={buttonText}
                       buttonDisabled={buttonDisabled || actionLoading}
@@ -443,6 +498,8 @@ export default function QuestPage() {
                     buttonDisabled = false;
                   }
 
+                  const rewardInfo = getRewardDisplay(quest);
+
                   return (
                     <QuestCard
                       key={quest.id}
@@ -453,8 +510,8 @@ export default function QuestPage() {
                       maxProgress={maxProgress}
                       progressText={`${currentProgress}/${maxProgress} 완료`}
                       rewardIcon="🌌"
-                      rewardName={quest.rewards.kaiaAmount ? `${quest.rewards.kaiaAmount} KAIA` : quest.rewards.nftTokenId || '전설 보상'}
-                      rewardValue={quest.rewards.experience ? `경험치 +${quest.rewards.experience}` : '전설적 보상'}
+                      rewardName={rewardInfo.name}
+                      rewardValue={rewardInfo.value}
                       status={status}
                       buttonText={buttonText}
                       buttonDisabled={buttonDisabled || actionLoading}
