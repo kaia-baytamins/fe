@@ -1,7 +1,7 @@
 import type { DefiPortfolio as DefiPortfolioType } from '@/services/types';
 
 interface DefiPortfolioProps {
-  onDefiAction: (type: 'staking' | 'lp' | 'lending') => void;
+  onDefiAction: (type: 'staking' | 'lp_providing' | 'lending') => void;
   portfolio: DefiPortfolioType | null;
   loading?: boolean;
 }
@@ -36,7 +36,7 @@ export default function DefiPortfolio({ onDefiAction, portfolio, loading = false
       icon: '🌊', 
       amount: loading ? '$0' : `$${lpValue.toFixed(0)}`, 
       label: 'LP 제공', 
-      type: 'lp' as const 
+      type: 'lp_providing' as const 
     },
     { 
       icon: '🏦', 
@@ -77,7 +77,7 @@ export default function DefiPortfolio({ onDefiAction, portfolio, loading = false
             key={item.type}
             className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all ${
               item.type === 'staking' ? 'bg-green-600 hover:bg-green-700' :
-              item.type === 'lp' ? 'bg-blue-600 hover:bg-blue-700' :
+              item.type === 'lp_providing' ? 'bg-blue-600 hover:bg-blue-700' :
               'bg-purple-600 hover:bg-purple-700'
             } text-white`}
             onClick={() => onDefiAction(item.type)}

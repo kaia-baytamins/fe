@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useWallet } from '@/contexts/WalletContext';
 import StarBackground from '@/components/explore/StarBackground';
 import SettingsHeader from '@/components/settings/SettingsHeader';
 import ProfileSection from '@/components/settings/ProfileSection';
@@ -10,6 +11,7 @@ import DefiStats from '@/components/settings/DefiStats';
 import AppInfo from '@/components/settings/AppInfo';
 
 export default function SettingsPage() {
+  const { getNumericBalance } = useWallet();
   const [notifications, setNotifications] = useState(true);
   const [soundEffects, setSoundEffects] = useState(true);
   const [language, setLanguage] = useState('ko');
@@ -58,7 +60,7 @@ export default function SettingsPage() {
       
       {/* 메인 콘텐츠 */}
       <div className="relative z-10 p-4 space-y-6">
-        <SettingsHeader walletBalance={1250} />
+        <SettingsHeader walletBalance={getNumericBalance()} />
         
         <ProfileSection onViewProfile={handleViewProfile} />
         

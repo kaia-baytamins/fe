@@ -35,7 +35,7 @@ export function useCosmicAnimation() {
   const [particles, setParticles] = useState<Particle[]>([]);
   const [planets, setPlanets] = useState<Planet[]>([]);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | undefined>(undefined);
 
   // 마우스 위치 추적
   useEffect(() => {

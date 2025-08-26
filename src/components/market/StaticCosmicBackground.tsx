@@ -23,7 +23,7 @@ export default function StaticCosmicBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const meteorsRef = useRef<Meteor[]>([]);
   const blackHoleRef = useRef<BlackHole | null>(null);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | undefined>(undefined);
   const timeRef = useRef(0);
 
   useEffect(() => {

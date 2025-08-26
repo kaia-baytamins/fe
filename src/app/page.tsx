@@ -9,6 +9,7 @@ import MarketContent from '@/app/market/page';
 import QuestContent from '@/app/quest/page';
 import SettingsContent from '@/app/settings/page';
 import PetSelection from '@/components/PetSelection'; // 펫 선택 화면 컴포넌트
+import { WalletProvider } from '@/contexts/WalletContext';
 
 import { useLiff } from '@/hooks/useLiff';
 import { authService } from '@/services/authService';
@@ -98,19 +99,21 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 text-white flex flex-col">
-      {/* 상단 헤더 및 하단 탭바를 새로운 유저가 아닐 때만 표시 */}
-      {!isNewUser && <Header activeTab={activeTab} />}
-      <main
-        className="flex-1 overflow-y-auto"
-        style={{
-          paddingTop: isNewUser ? '0px' : '60px', // Header 높이 제외
-          paddingBottom: isNewUser ? '0px' : '60px', // TabBar 높이 제외
-        }}
-      >
-        {renderMainContent()}
-      </main>
-      {!isNewUser && <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />}
-    </div>
+    <WalletProvider>
+      <div className="h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 text-white flex flex-col">
+        {/* 상단 헤더 및 하단 탭바를 새로운 유저가 아닐 때만 표시 */}
+        {!isNewUser && <Header activeTab={activeTab} />}
+        <main
+          className="flex-1 overflow-y-auto"
+          style={{
+            paddingTop: isNewUser ? '0px' : '60px', // Header 높이 제외
+            paddingBottom: isNewUser ? '0px' : '60px', // TabBar 높이 제외
+          }}
+        >
+          {renderMainContent()}
+        </main>
+        {!isNewUser && <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />}
+      </div>
+    </WalletProvider>
   );
 }
