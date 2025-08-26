@@ -8,44 +8,58 @@ import ExploreContent from '@/app/explore/page';
 import MarketContent from '@/app/market/page';
 import QuestContent from '@/app/quest/page';
 import SettingsContent from '@/app/settings/page';
-import PetSelection from '@/components/PetSelection'; // 펫 선택 화면 컴포넌트
+import PetSelection from '@/components/PetSelection';
+import LoadingScreen from '@/components/LoadingScreen';
 import { WalletProvider } from '@/contexts/WalletContext';
 
 import { useLiff } from '@/hooks/useLiff';
 import { authService } from '@/services/authService';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState('home'); // 현재 활성화된 탭 상태 관리
+  const [activeTab, setActiveTab] = useState('home');
   const [authCompleted, setAuthCompleted] = useState(false);
-  const [isNewUser, setIsNewUser] = useState(false); // 새로운 유저 여부
-  const [isLoading, setIsLoading] = useState(true); // 로딩 상태 관리
-  
+  const [isNewUser, setIsNewUser] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // 메인에서 LIFF 데이터 관리
   const { accessToken, profile, liffInitialized } = useLiff();
 
-  // LIFF 초기화 중 로딩 화면 처리
   useEffect(() => {
-    if (!liffInitialized) {
-      setIsLoading(true); // LIFF 초기화 중
-    } else {
-      setIsLoading(false); // LIFF 초기화 완료
-    }
-  }, [liffInitialized]);
+    const waitForLiffInitialization = async () => {
+      console.log('LIFF 초기화 상태:', liffInitialized);
+      console.log('LIFF 프로필 데이터:', profile);
+  
+      // 이미 로그인된 상태인지 확인
+      if (authService.isAuthenticated()) {
+        console.log('이미 로그인된 상태입니다.');
+        setIsLoading(false); // 로딩 상태를 즉시 false로 설정
+        return;
+      }
+  
+      // LIFF 초기화가 완료되지 않은 상태
+      if (!liffInitialized) {
+        setIsLoading(true); // 로딩 상태 유지
+        return;
+      }
 
-  // Auto-login when profile is available
+    };
+  
+    waitForLiffInitialization();
+  }, [liffInitialized, profile]);
+  
+
   useEffect(() => {
     const handleAutoLogin = async () => {
       if (profile && !authCompleted && !authService.isAuthenticated()) {
         try {
           console.log('Auto-logging in with LINE profile:', profile);
-          // 백엔드 로그인 API 호출
+
           const response = await authService.simpleLogin(profile);
+          console.log('로그인 응답:', response);
 
           if (response.isNewUser) {
-            // 새로운 유저임을 확인
             setIsNewUser(true);
           }
+
           setAuthCompleted(true);
           console.log('Auto-login completed successfully');
         } catch (error) {
@@ -57,28 +71,22 @@ export default function Home() {
     handleAutoLogin();
   }, [profile, authCompleted]);
 
-  // 펫 선택 완료 후 처리 로직
   const handlePetSelection = async (selectedPet) => {
     try {
       console.log('Selected pet:', selectedPet);
 
-      // 펫 선택 API 호출
       await authService.registerPet(selectedPet);
-
-      // 펫 선택 완료 후 홈 화면으로 이동
-      setIsNewUser(false); // 펫 선택 완료 후 일반 유저로 전환
+      setIsNewUser(false);
       setActiveTab('home');
     } catch (error) {
       console.error('Failed to register pet:', error);
     }
   };
 
-  // 활성 탭에 따른 컴포넌트 매핑 - profile을 props로 전달
   const renderMainContent = () => {
     const commonProps = { accessToken, profile, isLoading };
 
-    // 새로운 유저일 경우 펫 선택 화면 띄우기
-    if (isNewUser) { //test -> !isNewUser
+    if (isNewUser) {
       return <PetSelection onPetSelect={handlePetSelection} userProfile={profile} />;
     }
 
@@ -97,6 +105,12 @@ export default function Home() {
         return <HomeContent {...commonProps} />;
     }
   };
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  console.log('현재 상태:', { isLoading, authCompleted, isNewUser });
 
   return (
     <WalletProvider>
