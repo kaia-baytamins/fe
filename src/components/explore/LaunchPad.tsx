@@ -14,6 +14,7 @@ export default function LaunchPad({ setActiveSection, profile }: LaunchPadProps)
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showFeedModal, setShowFeedModal] = useState(false);
   const [showTrainModal, setShowTrainModal] = useState(false);
+  const [showStatsModal, setShowStatsModal] = useState(false);
 
   // 펫 점수 데이터 (state로 변경)
   const [petStats, setPetStats] = useState({
@@ -82,67 +83,168 @@ export default function LaunchPad({ setActiveSection, profile }: LaunchPadProps)
   const spaceshipScore = equippedItemsArray.reduce((total, item) => total + item.score, 0);
 
   const planets = [
-    { 
-      id: 1, 
-      name: '달', 
-      requiredScore: 100, 
-      icon: '🌙', 
-      unlocked: true,
-      title: "액체 메탄 바다 탐험",
-      description: "두꺼운 대기와 메탄 호수(액체 상태의 메탄과 에탄)가 존재해. 지구와 유사한 환경을 가진 곳으로, 생명체 가능성이 연구되고 있어",
-      rewardType: "기본 NFT"
+    {
+      "id": 1,
+      "name": "달",
+      "requiredScore": 10,
+      "icon": "🌙",
+      "unlocked": true,
+      "title": "지구의 위성 탐험",
+      "description": "밤하늘에 언제나 떠 있는 달. 가장 가까운 곳이지만, 수많은 운석 충돌 자국과 고요한 암석 평원이 숨겨져 있어. 우주 탐사의 첫걸음을 떼보자!",
+      "rewardType": "기본 NFT"
     },
-    { 
-      id: 2, 
-      name: '화성', 
-      requiredScore: 200, 
-      icon: '🔴', 
-      unlocked: true,
-      title: "붉은 사막의 비밀 탐사",
-      description: "화성의 붉은 사막에는 과거 물이 흘렀던 흔적들이 남아있어! 지하에 얼음이 존재하고, 미생물의 흔적을 찾을 수 있을지도 몰라",
-      rewardType: "희귀 NFT"
+    {
+      "id": 2,
+      "name": "화성",
+      "requiredScore": 20,
+      "icon": "🔴",
+      "unlocked": true,
+      "title": "붉은 행성 생명체 탐사",
+      "description": "화성의 붉은 사막에는 과거 물이 흘렀던 흔적들이 남아있어! 지하에 얼음이 존재하고, 미생물의 흔적을 찾을 수 있을지도 몰라.",
+      "rewardType": "기본 NFT"
     },
-    { 
-      id: 3, 
-      name: '목성', 
-      requiredScore: 300, 
-      icon: '🪐', 
-      unlocked: true,
-      title: "거대한 폭풍의 중심 탐험",
-      description: "목성의 대적점은 지구보다도 큰 거대한 폭풍이야! 이 폭풍의 중심에는 어떤 비밀이 숨어있을까? 강력한 중력과 방사능을 뚫고 탐험해보자!",
-      rewardType: "전설 NFT"
+    {
+      "id": 3,
+      "name": "타이탄",
+      "requiredScore": 40,
+      "icon": "🌊",
+      "unlocked": true,
+      "title": "액체 메탄 바다 탐험",
+      "description": "두꺼운 오렌지색 대기 아래에는 액체 메탄과 에탄으로 이루어진 바다와 호수가 펼쳐져! 지구와 비슷하지만 전혀 다른 환경을 탐험하며 생명체의 단서를 찾아봐.",
+      "rewardType": "기본 NFT"
     },
-    { 
-      id: 4, 
-      name: '베텔기우스', 
-      requiredScore: 500, 
-      icon: '⭐', 
-      unlocked: false,
-      title: "초거성의 마지막 순간",
-      description: "언젠가 폭발할 운명의 초거성! 엄청난 에너지와 신비로운 물질들이 가득한 곳이야. 위험하지만 그만큼 희귀한 보상을 얻을 수 있어!",
-      rewardType: "신화 NFT"
+    {
+      "id": 4,
+      "name": "유로파",
+      "requiredScore": 60,
+      "icon": "💧",
+      "unlocked": true,
+      "title": "얼음 아래의 바다 탐험",
+      "description": "수십 킬로미터 두께의 얼음 껍질 아래에 거대한 물의 바다가 숨겨져 있어! 외계 생명체가 존재할 가장 유력한 후보지에서 너의 탐사선을 띄워봐.",
+      "rewardType": "기본 NFT"
     },
-    { 
-      id: 5, 
-      name: '유로파', 
-      requiredScore: 400, 
-      icon: '🧊', 
-      unlocked: true,
-      title: "얼음 아래 바다 탐험",
-      description: "얼음으로 뒤덮인 표면 아래에 거대한 물의 바다가 존재할 가능성이 있어! 외계 생명체의 흔적을 찾는 주요 탐사 대상인 곳이야!",
-      rewardType: "우주 NFT"
+    {
+      "id": 5,
+      "name": "토성",
+      "requiredScore": 100,
+      "icon": "🌀",
+      "unlocked": true,
+      "title": "토성의 아름다운 고리 탐험",
+      "description": "토성 주위를 둘러싼 얼음과 먼지로 이루어진 거대한 고리야. 수많은 조각들을 뚫고 고리 속으로 진입해 미지의 물질들을 수집할 수 있어!",
+      "rewardType": "희귀 NFT"
     },
-    { 
-      id: 6, 
-      name: '트리톤', 
-      requiredScore: 600, 
-      icon: '❄️', 
-      unlocked: false,
-      title: "얼음 화산 탐험",
-      description: "얼음 화산(cryovolcano)이 분출하며, 표면은 얼음과 질소로 덮여 있어! 신비로운 얼음 세계의 비밀을 파헤쳐보자!",
-      rewardType: "??? NFT"
+    {
+      "id": 6,
+      "name": "천왕성",
+      "requiredScore": 150,
+      "icon": "🥶",
+      "unlocked": false,
+      "title": "차가운 청록색 행성 탐사",
+      "description": "푸른색의 차가운 가스 행성이야. 가끔은 수평으로 회전하는 독특한 자전축 때문에 엄청난 폭풍이 몰아치곤 하지. 신비로운 가스들을 채집해봐!",
+      "rewardType": "희귀 NFT"
+    },
+    {
+      "id": 7,
+      "name": "트리톤",
+      "requiredScore": 300,
+      "icon": "🧊",
+      "unlocked": false,
+      "title": "얼음 화산의 신비",
+      "description": "해왕성의 위성인 트리톤에는 얼음 화산이 존재해! 표면을 뒤덮은 얼음과 질소가 분출되는 신비로운 곳이야. 극한의 환경을 극복하고 미지의 광물을 찾아내!",
+      "rewardType": "희귀 NFT"
+    },
+    {
+      "id": 8,
+      "name": "해왕성",
+      "requiredScore": 350,
+      "icon": "❄️",
+      "unlocked": false,
+      "title": "태양계 끝의 미스터리",
+      "description": "태양계 가장 바깥에서 거친 바람을 맞으며 홀로 빛나는 푸른 행성이야. 아직 인간의 발길이 닿지 않은 미지의 영역을 개척해봐!",
+      "rewardType": "희귀 NFT"
+    },
+    {
+      "id": 9,
+      "name": "명왕성",
+      "requiredScore": 400,
+      "icon": "💫",
+      "unlocked": false,
+      "title": "외로운 얼음 세계 탐험",
+      "description": "태양계의 가장 외딴 곳에 있는 왜소 행성이야. 고대의 비밀이 잠들어 있는 얼음과 바위의 세계에서 누구도 보지 못한 유물을 발견할 수 있어!",
+      "rewardType": "희귀 NFT"
+    },
+    {
+      "id": 10,
+      "name": "시리우스",
+      "requiredScore": 500,
+      "icon": "✨",
+      "unlocked": false,
+      "title": "밤하늘에서 가장 밝은 별",
+      "description": "태양계 밖에서 가장 가까운 항성이야. 엄청난 에너지를 뿜어내는 이 거대한 별을 탐사하며, 인류의 에너지 기술을 한 단계 진보시킬 수 있어!",
+      "rewardType": "에픽 NFT"
+    },
+    {
+      "id": 11,
+      "name": "알데바란",
+      "requiredScore": 550,
+      "icon": "⭐️",
+      "unlocked": false,
+      "title": "황소자리의 눈 탐험",
+      "description": "황소자리의 눈을 이루는 황색 거성 알데바란이야. 수백 년에 걸쳐 타오르는 거대한 별의 표면을 탐험하고, 별의 진화를 연구해봐!",
+      "rewardType": "에픽 NFT"
+    },
+    {
+      "id": 12,
+      "name": "베텔기우스",
+      "requiredScore": 600,
+      "icon": "💥",
+      "unlocked": false,
+      "title": "초거성 폭발의 순간",
+      "description": "언제 폭발할지 모르는 거대한 붉은 별! 엄청난 에너지와 희귀한 물질들이 가득하지만, 위험도 상상을 초월해. 최고의 조종사만이 도전할 수 있는 곳이야!",
+      "rewardType": "에픽 NFT"
+    },
+    {
+      "id": 13,
+      "name": "블랙홀",
+      "requiredScore": 1000,
+      "icon": "⚫",
+      "unlocked": false,
+      "title": "중력의 끝없는 구멍",
+      "description": "빛조차 탈출할 수 없는 강력한 중력의 끝없는 구멍이야. 우주 최강의 도전! 이 미지의 영역을 탐사하면 우주의 가장 큰 비밀을 알게 될지도 몰라.",
+      "rewardType": "전설 NFT"
+    },
+    {
+      "id": 14,
+      "name": "안드로메다 은하",
+      "requiredScore": 700,
+      "icon": "🌌",
+      "unlocked": false,
+      "title": "먼 은하의 신비",
+      "description": "우리 은하와 가장 가까운 대형 은하인 안드로메다 은하야. 수조 개의 별과 행성들을 탐험하며 미지의 세계를 탐사하고 새로운 문명의 흔적을 찾아봐.",
+      "rewardType": "에픽 NFT"
+    },
+    {
+      "id": 15,
+      "name": "오르트 구름",
+      "requiredScore": 800,
+      "icon": "☁️",
+      "unlocked": false,
+      "title": "태양계 경계의 장막",
+      "description": "태양계를 둘러싼 얼음 천체들의 집합체야. 태양계의 끝에서 신비로운 얼음 물질들을 채굴하며 다음 탐사 장소를 위한 자원을 모아봐!",
+      "rewardType": "에픽 NFT"
+    },
+    {
+      "id": 16,
+      "name": "WASP-12b",
+      "requiredScore": 900,
+      "icon": "🔥",
+      "unlocked": false,
+      "title": "별 가까이의 위험한 행성",
+      "description": "별에 너무 가까워 표면이 증발하고 있는 뜨거운 가스 행성이야. 극한의 환경을 견뎌내고 특별한 보상을 얻을 수 있는 최고의 모험지야!",
+      "rewardType": "에픽 NFT"
     }
-  ];
+  ]
+  
 
   const handleLaunch = () => {
     if (selectedPlanet && spaceshipScore >= planets.find(p => p.id === selectedPlanet)!.requiredScore) {
@@ -266,12 +368,21 @@ export default function LaunchPad({ setActiveSection, profile }: LaunchPadProps)
         
         {/* 펫 캐릭터 이미지 */}
         <div className="text-center mb-4">
-          <div className="w-32 h-32 mx-auto rounded-full overflow-hidden bg-gradient-to-br from-purple-400 to-blue-500 p-1">
-            <img 
-              src="/images/hoshitanu.png" 
-              alt="Hoshitanu" 
-              className="w-full h-full rounded-full object-cover"
-            />
+          <div className="relative">
+            <div className="w-32 h-32 mx-auto rounded-full overflow-hidden bg-gradient-to-br from-purple-400 to-blue-500 p-1">
+              <img 
+                src="/images/hoshitanu.png" 
+                alt="Hoshitanu" 
+                className="w-full h-full rounded-full object-cover"
+              />
+            </div>
+            {/* 속성 설명 버튼 */}
+            <button
+              onClick={() => setShowStatsModal(true)}
+              className="absolute top-2 right-2 w-6 h-6 bg-white/30 hover:bg-white/40 rounded-full flex items-center justify-center text-white text-xs font-bold transition-colors shadow-lg"
+            >
+              ?
+            </button>
           </div>
           <div className="text-sm text-gray-300 mt-2 font-medium">호시타누</div>
         </div>
@@ -583,6 +694,69 @@ export default function LaunchPad({ setActiveSection, profile }: LaunchPadProps)
             >
               확인
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 속성 설명 모달 */}
+      {showStatsModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
+          <div className="bg-slate-800 rounded-2xl p-6 max-w-sm w-full mx-4 relative">
+            {/* 닫기 버튼 */}
+            <button 
+              onClick={() => setShowStatsModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-600 transition-colors"
+            >
+              ✕
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden bg-gradient-to-br from-purple-400 to-blue-500 p-1">
+                <img 
+                  src="/images/hoshitanu.png" 
+                  alt="Hoshitanu" 
+                  className="w-full h-full rounded-full object-cover"
+                />
+              </div>
+              <h3 className="text-lg font-bold text-blue-400 mb-2">
+                🌟 호시타누 능력치 설명
+              </h3>
+            </div>
+
+            <div className="space-y-4">
+              {/* 체력 설명 */}
+              <div className="bg-red-900/20 border border-red-500/30 rounded-xl p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="text-2xl">❤️</div>
+                  <div className="font-bold"><span className="text-red-400">체력</span> <span className="text-white">현재: {petStats.health}</span></div>
+                </div>
+                <p className="text-sm text-gray-300 leading-relaxed">
+                  탐험 보낼 때의 소요 시간이 체력 수치에 비례해 감소해요!
+                </p>
+              </div>
+
+              {/* 민첩성 설명 */}
+              <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-xl p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="text-2xl">⚡</div>
+                  <div className="font-bold"><span className="text-yellow-400">민첩성</span> <span className="text-white">현재: {petStats.agility}</span></div>
+                </div>
+                <p className="text-sm text-gray-300 leading-relaxed">
+                  돌발 이벤트 발생 시 회피 또는 캐치 확률이 올라가요!
+                </p>
+              </div>
+
+              {/* 지능 설명 */}
+              <div className="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="text-2xl">🧠</div>
+                  <div className="font-bold"><span className="text-blue-400">지능</span> <span className="text-white">현재: {petStats.intelligence}</span></div>
+                </div>
+                <p className="text-sm text-gray-300 leading-relaxed">
+                  좋은 등급의 보상을 받아올 확률이 올라가요!
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}
