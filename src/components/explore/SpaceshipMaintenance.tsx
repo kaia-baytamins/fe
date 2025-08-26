@@ -7,22 +7,24 @@ interface SpaceshipMaintenanceProps {
   setActiveSection: (section: 'launchpad' | 'pet' | 'maintenance') => void;
 }
 
-type ItemCategory = 'engine' | 'fuel' | 'defense' | 'special';
+type ItemCategory = 'engine' | 'material' | 'special' | 'fuel';
 
 export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMaintenanceProps) {
   const [selectedCategory, setSelectedCategory] = useState<ItemCategory>('engine');
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [showSellModal, setShowSellModal] = useState(false);
   const [sellPrice, setSellPrice] = useState('');
+  const [itemsData, setItemsData] = useState<any[]>([]);
+  const [filteredItems, setFilteredItems] = useState<any[]>([]);
+
   const [inventoryData, setInventoryData] = useState<InventoryResponse | null>(null);
   const [isLoadingInventory, setIsLoadingInventory] = useState(true);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
-  const [itemsData, setItemsData] = useState<any[]>([]);
 
   // 테스트용 지갑 주소
   const testWalletAddress = '0x1234567890123456789012345678901234567890';
 
-  // 아이템 데이터 및 인벤토리 데이터 가져오기
+  // 아이템 데이터 가져오기
   useEffect(() => {
     loadItemsData();
     fetchInventoryData();
@@ -31,10 +33,10 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
   // items.json 데이터 로드
   const loadItemsData = async () => {
     try {
-      const response = await fetch('/asset/items.json');
-      const data = await response.json();
-      setItemsData(data.items || []);
-      console.log('📜 아이템 데이터 로드:', data.items);
+      const response = await fetch('/asset/items.json'); 
+      const data = await response.json(); 
+      setItemsData(data.items || []); 
+      console.log('📜 아이템 데이터 로드:', data.items); 
     } catch (error) {
       console.error('Failed to load items data:', error);
     }
@@ -45,10 +47,9 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
       setIsLoadingInventory(true);
       setInventoryError(null);
       
-      const data = await inventoryService.getInventoryByWallet(testWalletAddress);
-      setInventoryData(data);
-      
-      console.log('📦 API 응답 받은 인벤토리 데이터:', data);
+      const inventory = await inventoryService.getInventoryByWallet(testWalletAddress);
+      setInventoryData(inventory)
+      console.log('📦 API 응답 받은 인벤토리 데이터:', inventory.inventory); //{0: 5, 1: 3, 16: 10, 17: 7, 32: 1}
     } catch (error) {
       console.error('Failed to fetch inventory:', error);
       setInventoryError('인벤토리를 불러올 수 없습니다');
@@ -57,71 +58,47 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
     }
   };
 
-  // API 인벤토리와 아이템 정보 매칭
-  const getInventoryWithDetails = () => {
-    if (!inventoryData || !itemsData.length) return [];
-    
-    return inventoryService.getInventoryItemsArray(inventoryData)
-      .map(({ itemId, quantity }) => {
-        const itemInfo = itemsData.find(item => item.id === parseInt(itemId));
-        return {
-          id: parseInt(itemId),
-          name: itemInfo?.name || `Unknown Item ${itemId}`,
-          score: itemInfo?.score || 0,
-          icon: '⚙️', // 기본 아이콘
-          rarity: 'common', // 기본 등급
-          quantity,
-          found: !!itemInfo
-        };
-      })
-      .filter(item => item.quantity > 0); // 개수가 0보다 큰 것만
-  };
+  // 카테고리에 따른 아이템 필터링
+  useEffect(() => {
+    const filterItemsByCategory = () => {
+      if (!inventoryData || !itemsData.length) {
+        setFilteredItems([]);
+        return;
+      }
 
-  // 현재 장착된 아이템들
-  const equippedItems = {
-    engine: { id: 1, name: '터보 엔진 V3', score: 150, icon: '⚙️', equipped: true },
-    fuel: null,
-    defense: { id: 2, name: '강화유리', score: 80, icon: '🛡️', equipped: true },
-    special: null,
-  };
+      let filtered = [];
+      const inventoryIds = Object.keys(inventoryData.inventory).map(id => parseInt(id)); // API 응답에서 itemId 추출
 
-  // 인벤토리 아이템들 (카테고리별)
-  const inventoryItems = {
-    engine: [
-      { id: 1, name: '터보 엔진 V5', score: 200, rarity: 'epic', icon: '⚙️', equipped: false },
-      { id: 3, name: '플라즈마 엔진', score: 180, rarity: 'rare', icon: '⚙️', equipped: false },
-      { id: 4, name: '기본 엔진', score: 100, rarity: 'common', icon: '⚙️', equipped: false },
-    ],
-    fuel: [
-      { id: 5, name: '크리스탈 유리', score: 200, rarity: 'epic', icon: '⛽', equipped: false },
-      { id: 6, name: '빈 술잔', score: 0, rarity: 'common', icon: '⛽', equipped: false },
-    ],
-    defense: [
-      { id: 7, name: '안전 데다', score: 800, rarity: 'legendary', icon: '🛡️', equipped: false },
-      { id: 8, name: '기본 방어막', score: 100, rarity: 'common', icon: '🛡️', equipped: false },
-    ],
-    special: [
-      { id: 9, name: '기본 특수장비', score: 100, rarity: 'common', icon: '⚡', equipped: false },
-      { id: 10, name: '미지의 NFT', score: 1000, rarity: 'legendary', icon: '⚡', equipped: false },
-    ],
-  };
+      switch (selectedCategory) {
+        case 'engine':
+          filtered = itemsData.filter(
+            item => inventoryIds.includes(item.id) && item.id >= 0 && item.id <= 15
+          );
+          break;
+        case 'material':
+          filtered = itemsData.filter(
+            item => inventoryIds.includes(item.id) && item.id >= 16 && item.id <= 31
+          );
+          break;
+        case 'special':
+          filtered = itemsData.filter(
+            item => inventoryIds.includes(item.id) && item.id >= 32 && item.id <= 47
+          );
+          break;
+        case 'fuel':
+          filtered = itemsData.filter(
+            item => inventoryIds.includes(item.id) && item.id >= 48 && item.id <= 63
+          );
+          break;
+        default:
+          filtered = [];
+      }
 
-  const categories = [
-    { id: 'engine', name: '엔진', icon: '⚙️' },
-    { id: 'fuel', name: '연료', icon: '⛽' },
-    { id: 'defense', name: '방어', icon: '🛡️' },
-    { id: 'special', name: '특수', icon: '⚡' },
-  ];
+      setFilteredItems(filtered);
+    };
 
-  const getRarityColor = (rarity: string) => {
-    switch (rarity) {
-      case 'common': return 'border-gray-500 bg-gray-800/30';
-      case 'rare': return 'border-blue-500 bg-blue-800/30';
-      case 'epic': return 'border-purple-500 bg-purple-800/30';
-      case 'legendary': return 'border-yellow-500 bg-yellow-800/30';
-      default: return 'border-gray-500 bg-gray-800/30';
-    }
-  };
+    filterItemsByCategory();
+  }, [selectedCategory, itemsData, inventoryData]);
 
   const handleEquip = (item: any) => {
     // 장착 로직
@@ -141,6 +118,13 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
       setSelectedItem(null);
     }
   };
+
+  const categories = [
+    { id: 'engine', name: '엔진', icon: '⚙️' },
+    { id: 'material', name: '재질', icon: '🛠️' },
+    { id: 'special', name: '특수장비', icon: '⚡' },
+    { id: 'fuel', name: '연료', icon: '⛽' },
+  ];
 
   return (
     <div className="p-4 space-y-6">
@@ -177,51 +161,18 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          {categories.map((category) => {
-            const equipped = equippedItems[category.id as keyof typeof equippedItems];
-            return (
-              <div key={category.id} className={`p-3 rounded-xl border-2 ${
-                equipped ? 'border-green-500 bg-green-800/20' : 'border-dashed border-gray-600 bg-gray-800/20'
-              }`}>
-                <div className="text-center">
-                  <div className="text-2xl mb-1">{category.icon}</div>
-                  <div className="text-sm font-medium">{category.name}</div>
-                  {equipped ? (
-                    <div className="text-xs text-green-400 mt-1">
-                      {equipped.name}
-                      <div className="text-yellow-400">+{equipped.score}</div>
-                    </div>
-                  ) : (
-                    <div className="text-xs text-gray-400 mt-1">빈 슬롯</div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="bg-yellow-600/20 p-3 rounded-xl mt-4">
-          <div className="text-center">
-            <h3 className="font-bold text-yellow-400 mb-2">⭐ 총 우주선 스펙</h3>
-            <div className="grid grid-cols-3 gap-4 text-sm">
-              <div>
-                <div className="font-bold text-yellow-400">230</div>
-                <div className="text-gray-300">추진력</div>
-              </div>
-              <div>
-                <div className="font-bold text-yellow-400">80</div>
-                <div className="text-gray-300">방어력</div>
-              </div>
-              <div>
-                <div className="font-bold text-yellow-400">310</div>
-                <div className="text-gray-300">종합점수</div>
+          {categories.map((category) => (
+            <div key={category.id} className="p-3 rounded-xl border-2 border-gray-600 bg-gray-800/20">
+              <div className="text-center">
+                <div className="text-2xl mb-1">{category.icon}</div>
+                <div className="text-sm font-medium">{category.name}</div>
               </div>
             </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* 기존 인벤토리 섹션 (하드코딩) */}
+      {/* 인벤토리 섹션 */}
       <div className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-4">
         <h2 className="text-xl font-bold text-red-400 mb-4">🎒 인벤토리</h2>
         
@@ -243,100 +194,44 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
           ))}
         </div>
 
-        {/* 아이템 목록 - API 데이터 사용 */}
+        {/* 아이템 목록 */}
         <div className="space-y-3">
-          {getInventoryWithDetails().map((item) => (
-            <div key={item.id} className={`p-4 rounded-xl border-2 ${getRarityColor(item.rarity)}`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{item.icon}</span>
-                  <div>
-                    <div className="font-medium text-white">{item.name}</div>
-                    <div className="text-sm text-gray-400">스코어 +{item.score}</div>
-                    <div className="text-xs text-yellow-400 capitalize">{item.rarity} NFT</div>
-                    <div className="text-xs text-blue-400">보유: x{item.quantity}</div>
+          {filteredItems.length > 0 ? (
+            filteredItems.map((item) => (
+              <div key={item.id} className="p-4 rounded-xl border-2 border-gray-400 bg-gray-800">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">⚙️</span> {/* 아이템 아이콘 */}
+                    <div>
+                      <div className="font-medium text-white">{item.name}</div>
+                      <div className="text-sm text-gray-400">스코어 +{item.score}</div>
+                      <div className="text-xs text-blue-400">장착 여부: {item.equipped ? '장착됨' : '미장착'}</div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEquip(item)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors"
+                    >
+                      ⚡ 장착
+                    </button>
+                    <button
+                      onClick={() => handleSell(item)}
+                      className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors"
+                    >
+                      💰 판매
+                    </button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleEquip(item)}
-                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors"
-                  >
-                    ⚡ 장착
-                  </button>
-                  <button
-                    onClick={() => handleSell(item)}
-                    className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors"
-                  >
-                    💰 판매
-                  </button>
-                </div>
               </div>
-            </div>
-          ))}
-          
-          {getInventoryWithDetails().length === 0 && (
+            ))
+          ) : (
             <div className="text-center py-8 text-gray-400">
-              {isLoadingInventory ? '인벤토리 로딩 중...' : '보유한 아이템이 없습니다'}
+              보유한 아이템이 없습니다
             </div>
           )}
         </div>
       </div>
-
-      {/* 판매 모달 */}
-      {showSellModal && selectedItem && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-800 rounded-2xl p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-center mb-4">💰 아이템 판매</h3>
-            
-            <div className="bg-slate-700/50 p-4 rounded-xl mb-4">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-2xl">{selectedItem.icon}</span>
-                <div>
-                  <div className="font-medium">{selectedItem.name}</div>
-                  <div className="text-sm text-gray-400">추진력 +{selectedItem.score}</div>
-                  <div className="text-xs text-yellow-400 capitalize">{selectedItem.rarity} NFT</div>
-                </div>
-              </div>
-              
-              <div className="text-sm text-gray-300">
-                마켓플레이스에 등록하여 다른 플레이어들에게 판매할 수 있습니다.
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">판매 가격 (KAIA)</label>
-              <input
-                type="number"
-                value={sellPrice}
-                onChange={(e) => setSellPrice(e.target.value)}
-                placeholder="판매하고 싶은 가격을 입력하세요"
-                className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowSellModal(false);
-                  setSellPrice('');
-                  setSelectedItem(null);
-                }}
-                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-xl font-medium transition-colors"
-              >
-                취소
-              </button>
-              <button
-                onClick={confirmSell}
-                disabled={!sellPrice || parseFloat(sellPrice) <= 0}
-                className="flex-1 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:opacity-50 text-white py-3 rounded-xl font-medium transition-colors"
-              >
-                판매 등록
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
