@@ -4,7 +4,7 @@ import type { ApprovalCheckResponse } from '../../services/types';
 
 interface DefiModalProps {
   isOpen: boolean;
-  type: 'staking' | 'lp' | 'lending' | null;
+  type: 'staking' | 'lp_providing' | 'lending' | null;
   onClose: () => void;
   onParticipate: (amount: number) => void;
   walletBalance?: number;
@@ -69,7 +69,7 @@ export default function DefiModal({ isOpen, type, onClose, onParticipate, wallet
         desc: 'KAIA 토큰을 스테이킹하여 안정적인 수익을 얻으세요.',
         apy: '12.5%'
       },
-      'lp': {
+      'lp_providing': {
         title: '🌊 LP 제공',
         desc: 'KAIA-USDT 페어에 유동성을 제공하고 더 높은 수익을 얻으세요.',
         apy: '24.8%'

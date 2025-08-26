@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 import { userService } from '@/services';
+import { useWallet } from '@/contexts/WalletContext';
 
 // MetaMask 타입 선언
 declare global {
@@ -10,8 +11,7 @@ declare global {
 }
 
 const WalletComponent: React.FC = () => {
-  const [walletAddress, setWalletAddress] = useState<string | null>(null); // 지갑 주소 상태
-  const [tokenBalance, setTokenBalance] = useState<string | null>(null); // 토큰 잔액 상태
+  const { walletAddress, tokenBalance, setWalletAddress, setTokenBalance } = useWallet();
   const [showDisconnect, setShowDisconnect] = useState(false); // Disconnect 버튼 표시 여부
   const [isUpdatingWallet, setIsUpdatingWallet] = useState(false); // 지갑 주소 업데이트 중 상태
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useWallet } from '@/contexts/WalletContext';
 import StarBackground from '@/components/explore/StarBackground';
 import StaticCosmicBackground from '@/components/market/StaticCosmicBackground';
 import AmbientParticles from '@/components/market/AmbientParticles';
@@ -25,8 +26,9 @@ interface Item {
 }
 
 export default function MarketPage() {
+  const { getNumericBalance } = useWallet();
   const [currentCategory, setCurrentCategory] = useState('all');
-  const [currentMarketType, setCurrentMarketType] = useState<'mint' | 'user'>('mint');
+  const [currentMarketType, setCurrentMarketType] = useState<'mint' | 'user' | 'quest'>('mint');
   const [showItemModal, setShowItemModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -167,7 +169,7 @@ export default function MarketPage() {
       {/* 정적 UI 컨테이너 */}
       <div className="relative z-20 p-4 space-y-6">
         <StaticUI>
-        <MarketHeader walletBalance={1250} />
+        <MarketHeader walletBalance={getNumericBalance()} />
         
         <SearchAndFilter 
           currentCategory={currentCategory}

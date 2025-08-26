@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useWallet } from '@/contexts/WalletContext';
 import StarBackground from '@/components/explore/StarBackground';
 import StaticCosmicBackground from '@/components/market/StaticCosmicBackground';
 import AmbientParticles from '@/components/market/AmbientParticles';
@@ -19,6 +20,8 @@ import authService from '@/services/authService';
 import type { Quest, QuestProgress, DefiQuestType } from '@/services/types';
 
 export default function QuestPage() {
+  const { getNumericBalance } = useWallet();
+  
   // API hooks
   const { 
     quests, 
@@ -61,7 +64,7 @@ export default function QuestPage() {
 
   const weeklyDefiOptions = [
     { id: 'stake', title: '💰 스테이킹', details: '$100, 7일 유지' },
-    { id: 'lp', title: '🌊 LP 제공', details: 'KAIA-USDT $100' },
+    { id: 'lp_providing', title: '🌊 LP 제공', details: 'KAIA-USDT $100' },
     { id: 'lending', title: '🏦 렌딩', details: '$100 예치' }
   ];
 
@@ -71,10 +74,10 @@ export default function QuestPage() {
     { id: 'lending_borrow', title: '🏦 렌딩+보로잉', details: '복합 전략' }
   ];
 
-  const handleDefiAction = (type: 'staking' | 'lp' | 'lending') => {
+  const handleDefiAction = (type: 'staking' | 'lp_providing' | 'lending') => {
     const defiTypeMap: Record<string, DefiQuestType> = {
       'staking': 'staking',
-      'lp': 'lp_providing',
+      'lp_providing': 'lp_providing',
       'lending': 'lending'
     };
     
@@ -88,11 +91,8 @@ export default function QuestPage() {
     try {
       setActionLoading(true);
       
-      // For demo purposes, using a fixed amount. In real implementation,
-      // this would come from user input in the modal
-      const amount = currentDefiType === 'staking' ? '100' : '50';
-      
-      const transactionData = await prepareDefiTransaction(currentDefiType, amount);
+      // Use the actual amount parameter from user input
+      const transactionData = await prepareDefiTransaction(currentDefiType, amount.toString());
       
       if (transactionData?.success && transactionData.transactionData) {
         // In a real implementation, you would:
@@ -139,7 +139,7 @@ export default function QuestPage() {
         // Map option IDs to quest categories
         const optionMapping: Record<string, string> = {
           'stake': 'staking',
-          'lp': 'lp_providing', 
+          'lp_providing': 'lp_providing', 
           'lending': 'lending',
           'high_stake': 'staking',
           'multi_lp': 'lp_providing',
@@ -237,11 +237,7 @@ export default function QuestPage() {
         {/* Main content */}
         {isAuthenticated && !loading && !error && (
           <>
-            <QuestHeader walletBalance={
-              portfolioLoading ? 0 : 
-              portfolio?.portfolio?.totalValue ? 
-              (isNaN(parseFloat(portfolio.portfolio.totalValue)) ? 0 : parseFloat(portfolio.portfolio.totalValue)) : 0
-            } />
+            <QuestHeader walletBalance={getNumericBalance()} />
             
             <DefiPortfolio 
               onDefiAction={handleDefiAction} 
@@ -593,7 +589,7 @@ export default function QuestPage() {
         type={currentDefiType}
         onClose={() => {setShowDefiModal(false); setCurrentDefiType(null);}}
         onParticipate={handleParticipateDefi}
-        walletBalance={1250}
+        walletBalance={getNumericBalance()}
         loading={actionLoading}
       />
     </div>

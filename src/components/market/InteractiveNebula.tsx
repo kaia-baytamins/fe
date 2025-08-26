@@ -19,7 +19,7 @@ export default function InteractiveNebula() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pointsRef = useRef<NebulaPoint[]>([]);
   const mouseRef = useRef({ x: 0, y: 0, influence: 0 });
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | undefined>(undefined);
   const timeRef = useRef(0);
 
   useEffect(() => {

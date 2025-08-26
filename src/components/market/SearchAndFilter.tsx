@@ -1,8 +1,8 @@
 interface SearchAndFilterProps {
   currentCategory: string;
-  currentMarketType: string;
+  currentMarketType: 'mint' | 'user' | 'quest';
   onCategoryChange: (category: string) => void;
-  onMarketTypeChange: (type: string) => void;
+  onMarketTypeChange: (type: 'mint' | 'user' | 'quest') => void;
   onSearch: (query: string) => void;
 }
 
