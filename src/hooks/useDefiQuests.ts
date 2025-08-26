@@ -9,6 +9,11 @@ import type {
   GasDelegationResponse 
 } from '@/services/types';
 
+interface UseDefiQuestsOptions {
+  walletAddress?: string | null;
+  autoLoad?: boolean;
+}
+
 interface UseDefiQuestsResult {
   // Data
   portfolio: DefiPortfolio | null;
@@ -31,14 +36,16 @@ interface UseDefiQuestsResult {
   executeDelegatedTransaction: (transactionData: any, signature: string) => Promise<GasDelegationResponse | null>;
 }
 
-export function useDefiQuests(): UseDefiQuestsResult {
+export function useDefiQuests(options: UseDefiQuestsOptions = {}): UseDefiQuestsResult {
+  const { walletAddress: providedWalletAddress, autoLoad = false } = options;
+  const [walletAddress, setWalletAddress] = useState<string | null>(providedWalletAddress || null);
   // State
   const [portfolio, setPortfolio] = useState<DefiPortfolio | null>(null);
   const [defiStats, setDefiStats] = useState<DefiStats | null>(null);
   
   // Loading states
-  const [portfolioLoading, setPortfolioLoading] = useState(true);
-  const [statsLoading, setStatsLoading] = useState(true);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(false);
   const [transactionLoading, setTransactionLoading] = useState(false);
   
   // Error states
@@ -46,12 +53,32 @@ export function useDefiQuests(): UseDefiQuestsResult {
   const [statsError, setStatsError] = useState<string | null>(null);
   const [transactionError, setTransactionError] = useState<string | null>(null);
 
+  // Check for wallet connection on component mount
+  useEffect(() => {
+    if (!providedWalletAddress && typeof window !== 'undefined') {
+      // Check localStorage for previously connected wallet
+      const storedWalletAddress = localStorage.getItem('connectedWalletAddress');
+      if (storedWalletAddress) {
+        setWalletAddress(storedWalletAddress);
+      }
+    }
+  }, [providedWalletAddress]);
+
   // Fetch portfolio
   const refreshPortfolio = useCallback(async () => {
+    // 지갑 주소가 없으면 portfolio 조회 건너뛰기
+    if (!walletAddress) {
+      setPortfolioError('Wallet not connected');
+      setPortfolioLoading(false);
+      setPortfolio(null);
+      return;
+    }
+
     try {
       setPortfolioLoading(true);
       setPortfolioError(null);
       const data = await defiQuestService.getUserDefiPortfolio();
+      console.log('useDefiQuests - fetched portfolio data:', data);
       setPortfolio(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch portfolio';
@@ -60,7 +87,7 @@ export function useDefiQuests(): UseDefiQuestsResult {
     } finally {
       setPortfolioLoading(false);
     }
-  }, []);
+  }, [walletAddress]);
 
   // Fetch DeFi stats
   const refreshStats = useCallback(async () => {
@@ -135,11 +162,35 @@ export function useDefiQuests(): UseDefiQuestsResult {
 
   // Initial load
   useEffect(() => {
-    Promise.all([
-      refreshPortfolio(),
-      refreshStats()
-    ]);
-  }, [refreshPortfolio, refreshStats]);
+    if (autoLoad) {
+      Promise.all([
+        refreshPortfolio(),
+        refreshStats()
+      ]);
+    }
+  }, [autoLoad, refreshPortfolio, refreshStats]);
+
+  // Load data when wallet is connected
+  useEffect(() => {
+    if (walletAddress) {
+      // 지갑 연결 시 로딩 시작
+      setPortfolioLoading(true);
+      setStatsLoading(true);
+      
+      Promise.all([
+        refreshPortfolio(),
+        refreshStats()
+      ]);
+    } else {
+      // 지갑이 연결되지 않은 경우 로딩 상태 해제
+      setPortfolioLoading(false);
+      setStatsLoading(false);
+      setPortfolio(null);
+      setDefiStats(null);
+      setPortfolioError(null);
+      setStatsError(null);
+    }
+  }, [walletAddress, refreshPortfolio, refreshStats]);
 
   return {
     // Data

@@ -237,7 +237,11 @@ export default function QuestPage() {
         {/* Main content */}
         {isAuthenticated && !loading && !error && (
           <>
-            <QuestHeader walletBalance={portfolio?.portfolio?.totalValue ? parseFloat(portfolio.portfolio.totalValue) : 0} />
+            <QuestHeader walletBalance={
+              portfolioLoading ? 0 : 
+              portfolio?.portfolio?.totalValue ? 
+              (isNaN(parseFloat(portfolio.portfolio.totalValue)) ? 0 : parseFloat(portfolio.portfolio.totalValue)) : 0
+            } />
             
             <DefiPortfolio 
               onDefiAction={handleDefiAction} 

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
+import { userService } from '@/services';
 
 // MetaMask 타입 선언
 declare global {
@@ -12,6 +13,16 @@ const WalletComponent: React.FC = () => {
   const [walletAddress, setWalletAddress] = useState<string | null>(null); // 지갑 주소 상태
   const [tokenBalance, setTokenBalance] = useState<string | null>(null); // 토큰 잔액 상태
   const [showDisconnect, setShowDisconnect] = useState(false); // Disconnect 버튼 표시 여부
+  const [isUpdatingWallet, setIsUpdatingWallet] = useState(false); // 지갑 주소 업데이트 중 상태
+
+  // 페이지 로드 시 localStorage에서 지갑 주소 복원
+  useEffect(() => {
+    const storedWalletAddress = localStorage.getItem('connectedWalletAddress');
+    if (storedWalletAddress && window.ethereum) {
+      setWalletAddress(storedWalletAddress);
+      fetchTokenBalance(storedWalletAddress);
+    }
+  }, []);
 
   // ERC-20 토큰 정보 (Kaia Kairos Testnet용)
   const TOKEN_CONTRACT_ADDRESS = "0x6283D8384d8F6eAF24eC44D355F31CEC0bDacE3D"; // USDT 토큰 주소
@@ -36,6 +47,9 @@ const WalletComponent: React.FC = () => {
       });
       const account = accounts[0]; // 첫 번째 계정 선택
       setWalletAddress(account); // 지갑 주소 저장
+      
+      // localStorage에 지갑 주소 저장
+      localStorage.setItem('connectedWalletAddress', account);
 
       // 네트워크 변경 이벤트 리스너 추가
       if (window.ethereum.on) {
@@ -48,6 +62,9 @@ const WalletComponent: React.FC = () => {
         });
       }
 
+      // 백엔드에 지갑 주소 업데이트
+      await updateWalletAddressToBackend(account);
+
       // 토큰 잔액 조회
       await fetchTokenBalance(account);
     } catch (err) {
@@ -56,8 +73,22 @@ const WalletComponent: React.FC = () => {
     }
   };
 
+  // 백엔드에 지갑 주소 업데이트 함수
+  const updateWalletAddressToBackend = async (walletAddress: string) => {
+    try {
+      setIsUpdatingWallet(true);
+      const response = await userService.updateWalletAddress(walletAddress);
+      console.log('Wallet address updated successfully:', response);
+    } catch (error) {
+      console.error('Failed to update wallet address:', error);
+      // 지갑 주소 업데이트 실패해도 연결은 유지
+    } finally {
+      setIsUpdatingWallet(false);
+    }
+  };
+
   // 토큰 잔액 조회 함수
-  const fetchTokenBalance = async (address: string) => {
+  const fetchTokenBalance = useCallback(async (address: string) => {
     try {
       let provider = new ethers.providers.Web3Provider(window.ethereum);
       
@@ -165,13 +196,16 @@ const WalletComponent: React.FC = () => {
       // 오류 시 기본값 설정
       setTokenBalance("0.0");
     }
-  };
+  }, [walletAddress]);
 
   // 지갑 연결 해제 함수
   const disconnectWallet = () => {
     setWalletAddress(null); // 지갑 주소 초기화
     setTokenBalance(null); // 토큰 잔액 초기화
     setShowDisconnect(false); // Disconnect 초기화
+    
+    // localStorage에서 지갑 주소 제거
+    localStorage.removeItem('connectedWalletAddress');
     
     // 네트워크 변경 이벤트 리스너 제거
     if (window.ethereum.removeAllListeners) {

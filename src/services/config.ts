@@ -26,6 +26,9 @@ export const API_CONFIG = {
     GAS_STATS: '/blockchain/gas-delegation/stats',
     GAS_SUPPORTED_TYPES: '/blockchain/gas-delegation/supported-types',
     GAS_FEE_PAYER: '/blockchain/gas-delegation/fee-payer',
+
+    // User endpoints
+    USER_UPDATE_WALLET: '/users/wallet-address',
   }
 };
 

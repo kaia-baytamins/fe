@@ -7,28 +7,44 @@ interface DefiPortfolioProps {
 }
 
 export default function DefiPortfolio({ onDefiAction, portfolio, loading = false }: DefiPortfolioProps) {
+  // Safe number parsing function
+  const safeParseFloat = (value: string | number | undefined | null): number => {
+    if (value === undefined || value === null || value === '') return 0;
+    const parsed = parseFloat(String(value));
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
+  // Debug log to check portfolio data
+  console.log('DefiPortfolio - portfolio:', portfolio);
+  console.log('DefiPortfolio - loading:', loading);
+
+  const stakingValue = safeParseFloat(portfolio?.portfolio?.stakingValue);
+  const lpValue = safeParseFloat(portfolio?.portfolio?.lpValue);
+  const lendingValue = safeParseFloat(portfolio?.portfolio?.lendingValue);
+  const totalValue = safeParseFloat(portfolio?.portfolio?.totalValue);
+
+  console.log('DefiPortfolio - parsed values:', { stakingValue, lpValue, lendingValue, totalValue });
+
   const portfolioItems = [
     { 
       icon: '💰', 
-      amount: portfolio ? `$${parseFloat(portfolio.portfolio.stakingValue).toFixed(0)}` : '$0', 
+      amount: loading ? '$0' : `$${stakingValue.toFixed(0)}`, 
       label: '스테이킹', 
       type: 'staking' as const 
     },
     { 
       icon: '🌊', 
-      amount: portfolio ? `$${parseFloat(portfolio.portfolio.lpValue).toFixed(0)}` : '$0', 
+      amount: loading ? '$0' : `$${lpValue.toFixed(0)}`, 
       label: 'LP 제공', 
       type: 'lp' as const 
     },
     { 
       icon: '🏦', 
-      amount: portfolio ? `$${parseFloat(portfolio.portfolio.lendingValue).toFixed(0)}` : '$0', 
+      amount: loading ? '$0' : `$${lendingValue.toFixed(0)}`, 
       label: '렌딩', 
       type: 'lending' as const 
     },
   ];
-
-  const totalValue = portfolio ? parseFloat(portfolio.portfolio.totalValue) : 0;
 
   return (
     <div className="bg-slate-800/5 backdrop-blur-lg rounded-2xl p-4 mb-6 border border-slate-700/20">
