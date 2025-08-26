@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 export const useLiff = () => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [liffInitialized, setLiffInitialized] = useState(true);
 
   useEffect(() => {
     const initializeLiff = async () => {
@@ -20,14 +20,14 @@ export const useLiff = () => {
 
           console.log('LIFF 초기화 완료!');
           
-          //IdToken 출력 (디버깅용)
+        //   //IdToken 출력 (디버깅용)
         //   const idToken = liff.getIDToken();
         //   console.log(idToken); // print idToken object
 
-        // Decode된 ID Token 출력 (디버깅용)
-        //   const idToken2 = liff.getDecodedIDToken();
-        //   console.log(idToken2); // print decoded idToken object
-        //   console.log('sub: ',idToken2.sub); // print userId
+        //Decode된 ID Token 출력 (디버깅용)
+          const idToken2 = liff.getDecodedIDToken();
+          console.log(idToken2); // print decoded idToken object
+          console.log('sub: ',idToken2.sub); // print userId
 
           if (!liff.isLoggedIn()) {
             console.log('로그인 필요');
@@ -45,7 +45,7 @@ export const useLiff = () => {
         } catch (error) {
           console.error('LIFF 초기화 실패:', error);
         } finally {
-          setIsLoading(false);
+          setLiffInitialized(false);
         }
       }
     };
@@ -54,5 +54,5 @@ export const useLiff = () => {
   }, []);
 
 
-  return { accessToken, profile, isLoading };
+  return { accessToken, profile, liffInitialized };
 };

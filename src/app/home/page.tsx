@@ -1,13 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SunsetBackground from '@/components/home/SunsetBackground';
 import { useLineFriends } from '@/hooks/useLineFriends';
+import { leaderboardService, LeaderboardEntry } from '@/services/leaderboardService';
 
 export default function HomePage({ accessToken, profile, isLoading }) {
   const [activeRankingTab, setActiveRankingTab] = useState<'global' | 'friends'>('global');
   const [activeRankingType, setActiveRankingType] = useState<'score' | 'planets' | 'nfts'>('score');
   const [showInviteSuccessModal, setShowInviteSuccessModal] = useState(false);
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+  const [isLoadingRanking, setIsLoadingRanking] = useState(true);
+  const [rankingError, setRankingError] = useState<string | null>(null);
   
   const { 
     inviteFriends,      // 친구 초대 함수
@@ -15,6 +19,52 @@ export default function HomePage({ accessToken, profile, isLoading }) {
   } = useLineFriends(accessToken); 
 
   console.log('여기는 home/page');
+
+  const fetchLeaderboardData = async () => {
+    try {
+      setIsLoadingRanking(true);
+      setRankingError(null);
+      
+      // 랭킹 타입을 API 형식으로 매핑
+      let apiType: 'total_explorations' | 'successful_explorations' | 'level';
+      switch (activeRankingType) {
+        case 'score':
+          apiType = 'total_explorations';
+          break;
+        case 'planets':
+          apiType = 'successful_explorations';
+          break;
+        case 'nfts':
+          apiType = 'level'; // NFT는 레벨로 대체
+          break;
+        default:
+          apiType = 'total_explorations';
+      }
+
+      const data = await leaderboardService.getLeaderboard({
+        type: apiType,
+        period: 'all_time',
+        limit: 10
+      });
+
+      setLeaderboardData(data);
+      
+      // 빈 데이터일 때 로그
+      if (data.length === 0) {
+        console.log('⚠️ API returned empty leaderboard data');
+      }
+    } catch (error) {
+      console.error('Failed to fetch leaderboard:', error);
+      setRankingError('리더보드를 불러올 수 없습니다');
+    } finally {
+      setIsLoadingRanking(false);
+    }
+  };
+
+  // 리더보드 데이터 가져오기
+  useEffect(() => {
+    fetchLeaderboardData();
+  }, [activeRankingType]);
 
   // 글로벌 랭킹 데이터 (점수)
   const globalScoreRanking = [
@@ -102,9 +152,28 @@ export default function HomePage({ accessToken, profile, isLoading }) {
     },
   ];
 
+  // API 데이터를 기존 형식으로 변환
+  const transformApiDataToRankingFormat = (apiData: LeaderboardEntry[]) => {
+    return apiData.map((entry) => ({
+      rank: entry.rank,
+      name: entry.user.username,
+      value: entry.score,
+      avatar: entry.metadata?.petType === 'momoco' ? '🐱' :
+              entry.metadata?.petType === 'panlulu' ? '🐼' :
+              entry.metadata?.petType === 'hoshitanu' ? '⭐' :
+              entry.metadata?.petType === 'mizuru' ? '💧' : '🚀',
+      isMe: false // TODO: 현재 사용자와 비교해서 설정
+    }));
+  };
+
   // 현재 선택된 랭킹 데이터 가져오기
   const getCurrentRanking = () => {
     if (activeRankingTab === 'global') {
+      // API 데이터가 있으면 사용, 없으면 기본값
+      if (leaderboardData.length > 0) {
+        return transformApiDataToRankingFormat(leaderboardData);
+      }
+      // 폴백: 기존 정적 데이터
       switch (activeRankingType) {
         case 'score': return globalScoreRanking;
         case 'planets': return globalPlanetRanking;
@@ -112,6 +181,7 @@ export default function HomePage({ accessToken, profile, isLoading }) {
         default: return globalScoreRanking;
       }
     } else {
+      // 친구 탭은 기존 데이터 사용
       switch (activeRankingType) {
         case 'score': return friendsScoreRanking;
         case 'planets': return friendsPlanetRanking;
@@ -274,7 +344,29 @@ export default function HomePage({ accessToken, profile, isLoading }) {
 
           {/* 랭킹 리스트 */}
           <div className="space-y-2">
-            {currentRanking.map((user) => (
+            {/* 로딩 상태 */}
+            {activeRankingTab === 'global' && isLoadingRanking && (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+                <span className="ml-3 text-gray-300">랭킹 로딩 중...</span>
+              </div>
+            )}
+
+            {/* 에러 상태 */}
+            {activeRankingTab === 'global' && rankingError && (
+              <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-4 text-center">
+                <div className="text-red-400 text-sm">⚠️ {rankingError}</div>
+                <button 
+                  onClick={fetchLeaderboardData}
+                  className="mt-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-all"
+                >
+                  다시 시도
+                </button>
+              </div>
+            )}
+
+            {/* 정상 데이터 표시 */}
+            {!(activeRankingTab === 'global' && (isLoadingRanking || rankingError)) && currentRanking.map((user) => (
               <div
                 key={user.rank}
                 className={`flex items-center gap-3 p-3 rounded-xl transition-all border ${

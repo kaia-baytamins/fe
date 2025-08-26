@@ -2,6 +2,10 @@
 export const API_CONFIG = {
   BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1',
   ENDPOINTS: {
+    // Auth endpoints
+    SIMPLE_LOGIN: '/auth/simple-login',
+    PET_REGISTER: '/auth/select-pet',
+    
     // Quest endpoints
     QUESTS: '/quests',
     QUEST_PROGRESS: '/quests/progress',
@@ -29,6 +33,10 @@ export const API_CONFIG = {
 
     // User endpoints
     USER_UPDATE_WALLET: '/users/wallet-address',
+    
+    // Leaderboard endpoints
+    LEADERBOARD: '/leaderboard',
+    LEADERBOARD_TOP_PERFORMERS: '/leaderboard/top-performers',
   }
 };
 
