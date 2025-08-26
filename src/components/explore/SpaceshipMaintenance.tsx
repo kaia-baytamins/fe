@@ -20,6 +20,7 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
   const [inventoryData, setInventoryData] = useState<InventoryResponse | null>(null);
   const [isLoadingInventory, setIsLoadingInventory] = useState(true);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
+  const [equippedItems, setEquippedItems] = useState<any>({});
 
   // 테스트용 지갑 주소
   const testWalletAddress = '0x1234567890123456789012345678901234567890';
@@ -28,6 +29,7 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
   useEffect(() => {
     loadItemsData();
     fetchInventoryData();
+    fetchEquippedItems(); // 장착 상태 조회 활성화
   }, []);
 
   // items.json 데이터 로드
@@ -58,6 +60,23 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
     }
   };
 
+  const fetchEquippedItems = async () => {
+    try {
+      const equipped = await inventoryService.getEquippedItems(testWalletAddress);
+      setEquippedItems(equipped?.equipment || {});
+      console.log('🔧 장착된 아이템 데이터:', equipped);
+    } catch (error) {
+      console.error('Failed to fetch equipped items:', error);
+      // 에러 발생 시 빈 객체로 설정하여 UI가 깨지지 않도록 함
+      setEquippedItems({});
+    }
+  };
+
+  // 아이템 ID로 아이템 정보 찾기
+  const getItemById = (itemId: number) => {
+    return itemsData.find(item => item.id === itemId);
+  };
+
   // 카테고리에 따른 아이템 필터링
   useEffect(() => {
     const filterItemsByCategory = () => {
@@ -68,6 +87,7 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
 
       let filtered = [];
       const inventoryIds = Object.keys(inventoryData.inventory).map(id => parseInt(id)); // API 응답에서 itemId 추출
+      const equippedIds = Object.values(equippedItems).map(item => item?.itemId).filter(Boolean);
 
       switch (selectedCategory) {
         case 'engine':
@@ -94,15 +114,50 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
           filtered = [];
       }
 
+      // 일단 items.json의 equipped 속성 사용 (나중에 API로 교체)
+      // filtered = filtered.map(item => ({
+      //   ...item,
+      //   equipped: equippedIds.includes(item.id)
+      // }));
+
       setFilteredItems(filtered);
     };
 
     filterItemsByCategory();
-  }, [selectedCategory, itemsData, inventoryData]);
+  }, [selectedCategory, itemsData, inventoryData, equippedItems]);
 
-  const handleEquip = (item: any) => {
-    // 장착 로직
-    console.log('장착:', item);
+  const handleEquip = async (item: any) => {
+    try {
+      console.log('⚙️ 장착 시작:', item);
+      const response = await inventoryService.equipItem(testWalletAddress, item.id);
+      
+      if (response.success) {
+        alert(`✅ ${item.name}이(가) 장착되었습니다!`);
+        // 인벤토리와 장착 상태 다시 로드
+        await fetchInventoryData();
+        await fetchEquippedItems();
+      }
+    } catch (error) {
+      console.error('장착 실패:', error);
+      alert('장착에 실패했습니다.');
+    }
+  };
+
+  const handleUnequip = async (item: any) => {
+    try {
+      console.log('🔓 해제 시작:', item);
+      const response = await inventoryService.unequipItem(testWalletAddress, item.id);
+      
+      if (response.success) {
+        alert(`🔓 ${item.name} 해제되었습니다!`);
+        // 인벤토리와 장착 상태 다시 로드
+        await fetchInventoryData();
+        await fetchEquippedItems();
+      }
+    } catch (error) {
+      console.error('해제 실패:', error);
+      alert('해제에 실패했습니다.');
+    }
   };
 
   const handleSell = (item: any) => {
@@ -161,14 +216,41 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          {categories.map((category) => (
-            <div key={category.id} className="p-3 rounded-xl border-2 border-gray-600 bg-gray-800/20">
-              <div className="text-center">
-                <div className="text-2xl mb-1">{category.icon}</div>
-                <div className="text-sm font-medium">{category.name}</div>
+          {categories.map((category) => {
+            // API 응답 구조에 맞게 매핑
+            const categoryMapping = {
+              engine: 'engine',
+              material: 'material',
+              special: 'specialEquipment',
+              fuel: 'fuelTank'
+            };
+            
+            const equippedItem = equippedItems[categoryMapping[category.id]];
+            const itemInfo = equippedItem ? getItemById(equippedItem.itemId) : null;
+
+            return (
+              <div 
+                key={category.id} 
+                className={`p-3 rounded-xl border-2 border-gray-600 bg-gray-800/20 ${
+                  itemInfo ? 'cursor-pointer hover:bg-gray-700/30 transition-colors' : ''
+                }`}
+                onClick={itemInfo ? () => handleUnequip(itemInfo) : undefined}
+              >
+                <div className="text-center">
+                  <div className="text-2xl mb-1">{category.icon}</div>
+                  {itemInfo ? (
+                    <>
+                      <div className="text-sm font-medium text-green-400">{itemInfo.name}</div>
+                      <div className="text-xs text-blue-300">스코어 +{itemInfo.score}</div>
+                      <div className="text-xs text-red-300 mt-1">클릭하여 해제</div>
+                    </>
+                  ) : (
+                    <div className="text-xs text-gray-500">미장착</div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -205,15 +287,21 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
                     <div>
                       <div className="font-medium text-white">{item.name}</div>
                       <div className="text-sm text-gray-400">스코어 +{item.score}</div>
-                      <div className="text-xs text-blue-400">장착 여부: {item.equipped ? '장착됨' : '미장착'}</div>
+                      <div className={`text-xs ${item.equipped ? 'text-green-400' : 'text-blue-400'}`}>
+                        {item.equipped ? '✅ 장착됨' : '미장착'}
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleEquip(item)}
-                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors"
+                      onClick={() => item.equipped ? handleUnequip(item) : handleEquip(item)}
+                      className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                        item.equipped 
+                          ? 'bg-red-600 hover:bg-red-700 text-white'
+                          : 'bg-green-600 hover:bg-green-700 text-white'
+                      }`}
                     >
-                      ⚡ 장착
+                      {item.equipped ? '🔓 해제' : '⚡ 장착'}
                     </button>
                     <button
                       onClick={() => handleSell(item)}
