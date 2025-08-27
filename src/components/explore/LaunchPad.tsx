@@ -515,7 +515,7 @@ export default function LaunchPad({ setActiveSection, profile }: LaunchPadProps)
             </div>
             
             <div className="grid grid-cols-2 gap-2 mb-3 overflow-y-auto flex-1 max-h-64">
-              {planets.slice(0, 6).map((planet) => {
+              {planets.map((planet) => {
                 const canExplore = planet.unlocked && spaceshipScore >= planet.requiredScore;
                 const isLocked = !planet.unlocked || spaceshipScore < planet.requiredScore;
                 const isSelected = selectedPlanet === planet.id;
