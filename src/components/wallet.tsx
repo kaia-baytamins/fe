@@ -89,10 +89,10 @@ const WalletComponent: React.FC = () => {
   // 토큰 잔액 조회 함수
   const fetchTokenBalance = useCallback(async (address: string) => {
     try {
-      let provider = new ethers.providers.Web3Provider(window.klaytn);
+      const provider = new ethers.BrowserProvider(window.klaytn);
       
       // 현재 네트워크 확인
-      let network = await provider.getNetwork();
+      const network = await provider.getNetwork();
       console.log("Current network:", network.name, "Chain ID:", network.chainId);
       
       // Kaia Kairos Testnet 확인 (Chain ID: 1001)
