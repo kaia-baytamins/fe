@@ -6,6 +6,8 @@ import type {
   EligibilityResponse,
   GasStats
 } from './types';
+import { ethers } from 'ethers';
+import { TxType } from '@kaiachain/ethers-ext/v6';
 
 interface TransactionForSigning {
   transaction: any;
@@ -109,6 +111,7 @@ class GasDelegationService {
       gasPrice?: string;
       value: string;
       type: string;
+      signedMessage?: string;
     },
     userSignature: string
   ): Promise<GasDelegationResponse> {
@@ -120,7 +123,8 @@ class GasDelegationService {
       gasPrice: transactionData.gasPrice,
       value: transactionData.value,
       type: transactionData.type as 'value_transfer' | 'value_transfer_memo' | 'contract_execution',
-      userSignature
+      userSignature,
+      signedMessage: transactionData.signedMessage
     });
   }
 
@@ -199,6 +203,83 @@ class GasDelegationService {
       gasPrice: transactionData.gasPrice || 'Auto',
       type: transactionData.type || 'contract_execution'
     };
+  }
+
+  /**
+   * Backend reference: Create senderTxHashRLP from user signature
+   * This method shows how backend should reconstruct senderTxHashRLP
+   * using @kaiachain/ethers-ext/v6 after receiving user signature from frontend
+   */
+  async createSenderTxHashRLP(
+    transactionData: {
+      type: number;
+      from: string;
+      to: string;
+      value: string;
+      data: string;
+      gas: string;
+      gasPrice: string;
+      nonce: string;
+      chainId: string;
+    },
+    userSignature: string
+  ): Promise<string> {
+    try {
+      // This is for backend implementation reference
+      // Frontend cannot do this directly due to security constraints
+      
+      // Example backend implementation:
+      // 1. Recreate the transaction object
+      const tx = {
+        type: TxType.FeeDelegatedSmartContractExecution,
+        from: transactionData.from,
+        to: transactionData.to,
+        value: transactionData.value,
+        data: transactionData.data,
+        gas: transactionData.gas,
+        gasPrice: transactionData.gasPrice,
+        nonce: transactionData.nonce,
+        chainId: transactionData.chainId
+      };
+
+      // 2. Parse user signature (r, s, v format)
+      const r = userSignature.slice(0, 66); // 0x + 64 chars
+      const s = '0x' + userSignature.slice(66, 130); // 64 chars
+      const v = '0x' + userSignature.slice(130, 132); // 2 chars
+      
+      const signature = { r, s, v };
+
+      // 3. Create KlaytnTx and add sender signature
+      // const { KlaytnTxFactory } = require('@kaiachain/js-ext-core');
+      // const klaytnTx = KlaytnTxFactory.fromObject(tx);
+      // klaytnTx.addSenderSig(signature);
+      // const senderTxHashRLP = klaytnTx.senderTxHashRLP();
+
+      // 4. Return senderTxHashRLP to be used by fee payer
+      // return senderTxHashRLP;
+
+      throw new Error('This method is for backend implementation reference only');
+    } catch (error) {
+      console.error('senderTxHashRLP creation failed:', error);
+      throw new Error('Failed to create senderTxHashRLP');
+    }
+  }
+
+  /**
+   * Helper: Create contract function data
+   */
+  createContractFunctionData(
+    contractABI: string[],
+    functionName: string,
+    parameters: any[]
+  ): string {
+    try {
+      const contract = new ethers.Interface(contractABI);
+      return contract.encodeFunctionData(functionName, parameters);
+    } catch (error) {
+      console.error('Failed to encode function data:', error);
+      throw new Error('Failed to create contract function data');
+    }
   }
 }
 

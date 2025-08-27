@@ -88,6 +88,7 @@ export interface DefiTransactionData {
     gasPrice?: string;
     value: string;
     type: string;
+    messageToSign: string;
   };
   message: string;
   instructions?: {
@@ -131,6 +132,7 @@ export interface GasDelegationRequest {
   memo?: string;
   type?: 'value_transfer' | 'value_transfer_memo' | 'contract_execution';
   userSignature?: string;
+  signedMessage?: string;
 }
 
 export interface GasDelegationResponse {

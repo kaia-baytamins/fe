@@ -1,6 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ethers } from 'ethers';
+
+// MetaMask 타입 선언
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
 import { useWallet } from '@/contexts/WalletContext';
 import StarBackground from '@/components/explore/StarBackground';
 import StaticCosmicBackground from '@/components/market/StaticCosmicBackground';
@@ -17,6 +25,7 @@ import DefiModal from '@/components/quest/DefiModal';
 import { useQuests } from '@/hooks/useQuests';
 import { useDefiQuests } from '@/hooks/useDefiQuests';
 import authService from '@/services/authService';
+import { gasDelegationService } from '@/services/gasDelegationService';
 import type { Quest, QuestProgress, DefiQuestType } from '@/services/types';
 
 export default function QuestPage() {
@@ -91,31 +100,107 @@ export default function QuestPage() {
     try {
       setActionLoading(true);
       
-      // Use the actual amount parameter from user input
+      const typeNames = {
+        'staking': '스테이킹',
+        'lp_providing': 'LP 제공',
+        'lending': '렌딩'
+      };
+      
+      // Step 1: Check if Kaikas wallet is connected and get user address first
+      if (!window.klaytn) {
+        alert('❌ Kaikas 지갑이 설치되어 있지 않습니다. Kaikas를 설치하고 연결해주세요.');
+        return;
+      }
+
+      // Step 2: Get KAIA provider and signer using ethers-ext
+      const provider = new ethers.BrowserProvider(window.klaytn);
+      const signer = await provider.getSigner();
+      
+      
+      // Step 3: Get user address
+      const userAddress = await signer.getAddress();
+      
+      // Step 4: Prepare transaction data from backend with user address
       const transactionData = await prepareDefiTransaction(currentDefiType, amount.toString());
       
-      if (transactionData?.success && transactionData.transactionData) {
-        // In a real implementation, you would:
-        // 1. Show the transaction details to user
-        // 2. Get user to sign the transaction 
-        // 3. Submit the signed transaction
+      if (!transactionData?.success || !transactionData.transactionData) {
+        alert(`❌ 트랜잭션 준비 실패: ${transactionData?.error || '알 수 없는 오류'}`);
+        return;
+      }
+      
+      // Step 5: Create KAIA transaction and sign using KAIA SDK
+      let senderTxHashRLP: string;
+      
+      try {
+        console.log('Creating KAIA fee delegated transaction with Kaikas');
         
-        // For now, showing success message
-        const typeNames = {
-          'staking': '스테이킹',
-          'lp_providing': 'LP 제공',
-          'lending': '렌딩'
+        // Import KAIA SDK components for transaction type
+        const { TxType } = await import('@kaiachain/ethers-ext/v6');
+        
+        // Create KAIA transaction object for Kaikas
+        const kaiaTransaction = {
+          type: '0x31', // FeeDelegatedSmartContractExecution in hex
+          from: userAddress,
+          to: transactionData.transactionData.to,
+          value: transactionData.transactionData.value || '0x0',
+          data: transactionData.transactionData.data,
+          gas: transactionData.transactionData.gas,
+          gasPrice: transactionData.transactionData.gasPrice,
         };
         
-        alert(`🎉 ${typeNames[currentDefiType]} 트랜잭션 준비 완료!\n\n투자 금액: ${amount.toFixed(2)} KAIA\n${transactionData.message}\n\n실제 구현에서는 지갑 서명이 필요합니다.`);
+        console.log('KAIA transaction object for Kaikas:', kaiaTransaction);
+        
+        // Use Kaikas native method to sign KAIA transaction
+        const kaiaSignResult = await window.klaytn.request({
+          method: 'klay_signTransaction',
+          params: [kaiaTransaction]
+        });
+        
+        console.log('✅ Kaikas generated senderTxHashRLP:', kaiaSignResult);
+        
+        // Extract the rawTransaction (senderTxHashRLP) from the response
+        if (kaiaSignResult && kaiaSignResult.rawTransaction) {
+          senderTxHashRLP = kaiaSignResult.rawTransaction;
+          console.log('✅ Extracted senderTxHashRLP:', senderTxHashRLP);
+        } else {
+          throw new Error('Kaikas did not return rawTransaction');
+        }
+        
+      } catch (signError) {
+        console.error('❌ KAIA transaction signing error:', signError);
+        alert('❌ KAIA 트랜잭션 서명에 실패했습니다. Kaikas 지갑이 연결되어 있고 올바른 네트워크에 있는지 확인해주세요.');
+        return;
+      }
+
+      // Step 6: Execute the delegated transaction with senderTxHashRLP
+      // Backend will use the proper senderTxHashRLP from KAIA SDK
+      const delegationResponse = await executeDelegatedTransaction(
+        {
+          ...transactionData.transactionData,
+          from: userAddress,
+          signedMessage: senderTxHashRLP // KAIA SDK senderTxHashRLP
+        },
+        '' // No separate userSignature needed for KAIA SDK approach
+      );
+
+      if (delegationResponse?.success) {
+        alert(`🎉 ${typeNames[currentDefiType]} 트랜잭션이 성공적으로 실행되었습니다!\n\n투자 금액: ${amount.toFixed(2)} USDT\nTx Hash: ${delegationResponse.txHash}`);
         setShowDefiModal(false);
         setCurrentDefiType(null);
       } else {
-        alert(`❌ 트랜잭션 준비 실패: ${transactionData?.error || '알 수 없는 오류'}`);
+        alert(`❌ 트랜잭션 실행 실패: ${delegationResponse?.error || '알 수 없는 오류'}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('DeFi participation error:', error);
-      alert('❌ DeFi 참여 중 오류가 발생했습니다.');
+      
+      // Handle specific error types
+      if (error.code === 4001) {
+        alert('❌ 사용자가 트랜잭션을 취소했습니다.');
+      } else if (error.message?.includes('User rejected')) {
+        alert('❌ 사용자가 서명을 거부했습니다.');
+      } else {
+        alert(`❌ DeFi 참여 중 오류가 발생했습니다: ${error.message || error}`);
+      }
     } finally {
       setActionLoading(false);
     }
@@ -261,7 +346,6 @@ export default function QuestPage() {
                   const progress = getQuestProgressById(quest.id);
                   const currentProgress = progress?.progress || 0;
                   const maxProgress = quest.requirements.amount || 1;
-                  const progressPercentage = progress?.progressPercentage || 0;
                   
                   let status: "locked" | "completed" | "in-progress" = "locked";
                   let buttonText = "시작하기";

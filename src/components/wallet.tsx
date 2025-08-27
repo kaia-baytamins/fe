@@ -3,10 +3,10 @@ import { ethers } from "ethers";
 import { userService } from '@/services';
 import { useWallet } from '@/contexts/WalletContext';
 
-// MetaMask 타입 선언
+// Kaikas 지갑 타입 선언
 declare global {
   interface Window {
-    ethereum?: any;
+    klaytn?: any;
   }
 }
 
@@ -18,7 +18,7 @@ const WalletComponent: React.FC = () => {
   // 페이지 로드 시 localStorage에서 지갑 주소 복원
   useEffect(() => {
     const storedWalletAddress = localStorage.getItem('connectedWalletAddress');
-    if (storedWalletAddress && window.ethereum) {
+    if (storedWalletAddress && window.klaytn) {
       setWalletAddress(storedWalletAddress);
       fetchTokenBalance(storedWalletAddress);
     }
@@ -34,17 +34,16 @@ const WalletComponent: React.FC = () => {
     "function decimals() view returns (uint8)",
   ];
 
-  // 지갑 연결 함수
+  // Kaikas 지갑 연결 함수
   const connectWallet = async () => {
-    if (!window.ethereum) {
-      alert("MetaMask 또는 다른 Web3 지갑이 설치되어 있지 않습니다.");
+    if (!window.klaytn) {
+      alert("Kaikas 지갑이 설치되어 있지 않습니다. Kaikas를 설치하고 새로고침해주세요.");
       return;
     }
 
     try {
-      const accounts = await window.ethereum.request({
-        method: "eth_requestAccounts",
-      });
+      // Kaikas 지갑 연결 요청
+      const accounts = await window.klaytn.enable();
       const account = accounts[0]; // 첫 번째 계정 선택
       setWalletAddress(account); // 지갑 주소 저장
       
@@ -52,8 +51,8 @@ const WalletComponent: React.FC = () => {
       localStorage.setItem('connectedWalletAddress', account);
 
       // 네트워크 변경 이벤트 리스너 추가
-      if (window.ethereum.on) {
-        window.ethereum.on('chainChanged', (chainId: string) => {
+      if (window.klaytn.on) {
+        window.klaytn.on('chainChanged', (chainId: string) => {
           console.log('Network changed to:', parseInt(chainId, 16));
           // 네트워크가 변경되면 토큰 잔액을 다시 조회
           if (account) {
@@ -90,61 +89,17 @@ const WalletComponent: React.FC = () => {
   // 토큰 잔액 조회 함수
   const fetchTokenBalance = useCallback(async (address: string) => {
     try {
-      let provider = new ethers.providers.Web3Provider(window.ethereum);
+      let provider = new ethers.BrowserProvider(window.klaytn);
       
       // 현재 네트워크 확인
       let network = await provider.getNetwork();
       console.log("Current network:", network.name, "Chain ID:", network.chainId);
       
       // Kaia Kairos Testnet 확인 (Chain ID: 1001)
-      if (network.chainId !== 1001) {
+      if (Number(network.chainId) !== 1001) {
         console.warn("Warning: Not connected to Kaia Kairos Testnet");
-        // Kaia Kairos Testnet으로 전환 요청
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0x3e9' }], // 1001 in hex (Kaia Kairos Testnet)
-          });
-          
-          // 네트워크 전환 후 잠시 대기하고 새로운 provider 생성
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          provider = new ethers.providers.Web3Provider(window.ethereum);
-          network = await provider.getNetwork();
-          console.log("Switched to network:", network.name, "Chain ID:", network.chainId);
-          
-        } catch (switchError: any) {
-          // 네트워크가 추가되지 않은 경우 추가 요청
-          if (switchError.code === 4902) {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [{
-                chainId: '0x3e9',
-                chainName: 'Kaia Kairos Testnet',
-                nativeCurrency: {
-                  name: 'KAIA',
-                  symbol: 'KAIA',
-                  decimals: 18
-                },
-                rpcUrls: ['https://public-en-kairos.node.kaia.io'],
-                blockExplorerUrls: ['https://kairos.kaiascan.io/']
-              }],
-            });
-            
-            // 네트워크 추가 후 잠시 대기하고 새로운 provider 생성
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            provider = new ethers.providers.Web3Provider(window.ethereum);
-            network = await provider.getNetwork();
-            console.log("Added and switched to network:", network.name, "Chain ID:", network.chainId);
-            
-          } else {
-            throw switchError;
-          }
-        }
-      }
-
-      // 최종 네트워크 확인
-      if (network.chainId !== 1001) {
-        throw new Error('Failed to switch to Kaia Kairos Testnet');
+        alert("Kaikas에서 Kaia Kairos Testnet으로 네트워크를 변경해주세요.");
+        return;
       }
 
       const tokenContract = new ethers.Contract(
@@ -170,7 +125,7 @@ const WalletComponent: React.FC = () => {
       const balance = await tokenContract.balanceOf(address);
 
       // 잔액을 읽기 쉽게 변환 (실제 decimals 사용)
-      const formattedBalance = ethers.utils.formatUnits(balance, actualDecimals);
+      const formattedBalance = ethers.formatUnits(balance, actualDecimals);
       setTokenBalance(formattedBalance);
     } catch (err: any) {
       console.error("Failed to fetch token balance:", err);
