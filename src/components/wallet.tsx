@@ -89,7 +89,7 @@ const WalletComponent: React.FC = () => {
   // 토큰 잔액 조회 함수
   const fetchTokenBalance = useCallback(async (address: string) => {
     try {
-      let provider = new ethers.BrowserProvider(window.klaytn);
+      let provider = new ethers.providers.Web3Provider(window.klaytn);
       
       // 현재 네트워크 확인
       let network = await provider.getNetwork();
@@ -125,7 +125,7 @@ const WalletComponent: React.FC = () => {
       const balance = await tokenContract.balanceOf(address);
 
       // 잔액을 읽기 쉽게 변환 (실제 decimals 사용)
-      const formattedBalance = ethers.formatUnits(balance, actualDecimals);
+      const formattedBalance = ethers.utils.formatUnits(balance, actualDecimals);
       setTokenBalance(formattedBalance);
     } catch (err: any) {
       console.error("Failed to fetch token balance:", err);

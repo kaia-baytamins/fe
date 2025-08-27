@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { inventoryService } from '@/services/inventoryService';
+import StaticUI from '@/components/market/StaticUI';
 
 interface LaunchPadProps {
   setActiveSection: (section: 'launchpad' | 'maintenance') => void;
@@ -357,6 +358,7 @@ export default function LaunchPad({ setActiveSection, profile }: LaunchPadProps)
 
   return (
     <div className="p-4 space-y-6">
+      <StaticUI>
       {/* 네비게이션 버튼들 */}
       <div className="flex justify-center gap-4 mb-6">
         <button 
@@ -775,6 +777,7 @@ export default function LaunchPad({ setActiveSection, profile }: LaunchPadProps)
           </div>
         </div>
       )}
+      </StaticUI>
     </div>
   );
 }

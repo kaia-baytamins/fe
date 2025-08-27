@@ -1,7 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import SunsetBackground from '@/components/home/SunsetBackground';
+import StarBackground from '@/components/explore/StarBackground';
+import StaticCosmicBackground from '@/components/market/StaticCosmicBackground';
+import AmbientParticles from '@/components/market/AmbientParticles';
+import SimpleFloatingElements from '@/components/market/SimpleFloatingElements';
+import StaticUI from '@/components/market/StaticUI';
 import { useLineFriends } from '@/hooks/useLineFriends';
 import { leaderboardService, LeaderboardRankingEntry, LeaderboardRankingsResponse } from '@/services/leaderboardService';
 import { nftService, NFTCollectionResponse } from '@/services/nftService';
@@ -283,9 +287,12 @@ export default function HomePage({ accessToken, profile, isLoading }) {
   const currentRanking = getCurrentRanking();
 
   return (
-    <div className="relative min-h-full p-4 space-y-6">
-      {/* 노을지는 배경 */}
-      <SunsetBackground />
+    <div className="relative min-h-full overflow-hidden">
+      {/* 정적 우주 배경 시스템 */}
+      <StarBackground />
+      <AmbientParticles />
+      <StaticCosmicBackground />
+      <SimpleFloatingElements />
       
       {/* 친구 초대 성공 모달 */}
       {showInviteSuccessModal && (
@@ -336,8 +343,9 @@ export default function HomePage({ accessToken, profile, isLoading }) {
         </div>
       )}
       
-      {/* 메인 콘텐츠 */}
-      <div className="relative z-10">
+      {/* 정적 UI 컨테이너 */}
+      <div className="relative z-20 p-4 pt-4 space-y-4">
+        <StaticUI>
         {/* 나의 우주 컬렉션 섹션 */}
         <div className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-4 mb-6 border border-slate-700/50">
           <h3 className="text-green-400 font-bold mb-4 flex items-center gap-2">
@@ -608,11 +616,12 @@ export default function HomePage({ accessToken, profile, isLoading }) {
           </button>
 
 
-
         </div>
+        </StaticUI>
+      </div>
 
-        {/* NFT 상세 모달 */}
-        {showNFTModal && selectedNFT && (
+      {/* NFT 상세 모달 */}
+      {showNFTModal && selectedNFT && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
             <div className="bg-slate-800 rounded-2xl p-6 m-4 max-w-md w-full border border-slate-600 max-h-[80vh] overflow-y-auto relative">
               {/* 닫기 버튼 */}
@@ -676,7 +685,6 @@ export default function HomePage({ accessToken, profile, isLoading }) {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 }

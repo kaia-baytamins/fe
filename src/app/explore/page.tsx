@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import StarBackground from '@/components/explore/StarBackground';
+import StaticCosmicBackground from '@/components/market/StaticCosmicBackground';
+import AmbientParticles from '@/components/market/AmbientParticles';
+import SimpleFloatingElements from '@/components/market/SimpleFloatingElements';
 import LaunchPad from '@/components/explore/LaunchPad';
 import SpaceshipMaintenance from '@/components/explore/SpaceshipMaintenance';
 
@@ -35,9 +38,12 @@ export default function ExplorePage({ profile }: ExplorePageProps) {
   };
 
   return (
-    <div className="relative h-full">
-      {/* 반짝이는 별 배경 */}
+    <div className="relative h-full overflow-hidden">
+      {/* 정적 우주 배경 시스템 */}
       <StarBackground />
+      <AmbientParticles />
+      <StaticCosmicBackground />
+      <SimpleFloatingElements />
       
       {/* 메인 콘텐츠 */}
       <div className="relative z-10 h-full overflow-y-auto">

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { inventoryService, InventoryResponse } from '@/services/inventoryService';
 import SellItemModal from './SellItemModal';
+import StaticUI from '@/components/market/StaticUI';
 
 interface SpaceshipMaintenanceProps {
   setActiveSection: (section: 'launchpad' | 'maintenance') => void;
@@ -215,6 +216,7 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
 
   return (
     <div className="p-4 space-y-6">
+      <StaticUI>
       {/* 네비게이션 버튼들 */}
       <div className="flex justify-center gap-4 mb-6">
         <button 
@@ -388,6 +390,7 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
           </div>
         </div>
       )}
+      </StaticUI>
     </div>
   );
 }

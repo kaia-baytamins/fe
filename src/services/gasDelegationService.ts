@@ -274,7 +274,7 @@ class GasDelegationService {
     parameters: any[]
   ): string {
     try {
-      const contract = new ethers.Interface(contractABI);
+      const contract = new ethers.utils.Interface(contractABI);
       return contract.encodeFunctionData(functionName, parameters);
     } catch (error) {
       console.error('Failed to encode function data:', error);
