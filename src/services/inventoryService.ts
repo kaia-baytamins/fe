@@ -142,6 +142,41 @@ class InventoryService {
   }
 
   /**
+   * 아이템 판매
+   */
+  async sellItem(walletAddress: string, itemId: number, price: number): Promise<any> {
+    const apiUrl = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.INVENTORY_SELL}`;
+    
+    const requestBody = {
+      walletAddress,
+      itemId,
+      price
+    };
+    
+    console.log('💰 Sell API call:', { url: apiUrl, requestBody });
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    console.log('💰 Sell response status:', response.status, response.statusText);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('💰 Sell API error:', errorText);
+      throw new Error(`판매 실패: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('💰 Sell data received:', data);
+    return data;
+  }
+
+  /**
    * 인벤토리 데이터를 배열로 변환
    */
   getInventoryItemsArray(inventoryResponse: InventoryResponse): {itemId: string, quantity: number}[] {

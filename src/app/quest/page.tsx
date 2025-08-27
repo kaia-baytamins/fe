@@ -7,7 +7,6 @@ import StaticCosmicBackground from '@/components/market/StaticCosmicBackground';
 import AmbientParticles from '@/components/market/AmbientParticles';
 import SimpleFloatingElements from '@/components/market/SimpleFloatingElements';
 import StaticUI from '@/components/market/StaticUI';
-import QuestHeader from '@/components/quest/QuestHeader';
 import DefiPortfolio from '@/components/quest/DefiPortfolio';
 import SpecialEvent from '@/components/quest/SpecialEvent';
 import QuestTabs from '@/components/quest/QuestTabs';
@@ -196,7 +195,7 @@ export default function QuestPage() {
       <SimpleFloatingElements />
       
       {/* 정적 UI 컨테이너 */}
-      <div className="relative z-20 p-4 space-y-6">
+      <div className="relative z-20 p-4 pt-4 space-y-4">
         <StaticUI>
         {/* Authentication required state */}
         {!isAuthenticated && (
@@ -226,8 +225,6 @@ export default function QuestPage() {
         {/* Main content */}
         {isAuthenticated && !loading && !error && (
           <>
-            <QuestHeader walletBalance={getNumericBalance()} />
-            
             <DefiPortfolio 
               onDefiAction={handleDefiAction} 
               portfolio={portfolio}
