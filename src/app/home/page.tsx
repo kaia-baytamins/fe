@@ -9,16 +9,64 @@ export default function HomePage({ accessToken, profile, isLoading }) {
   const [activeRankingTab, setActiveRankingTab] = useState<'global' | 'friends'>('global');
   const [activeRankingType, setActiveRankingType] = useState<'explorations' | 'planets'>('explorations');
   const [showInviteSuccessModal, setShowInviteSuccessModal] = useState(false);
+  const [showNFTModal, setShowNFTModal] = useState(false);
+  const [selectedNFT, setSelectedNFT] = useState<any>(null);
+  const [showNFTShareSuccessModal, setShowNFTShareSuccessModal] = useState(false); // NFT 자랑 성공 모달
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardRankingsResponse | null>(null);
   const [isLoadingRanking, setIsLoadingRanking] = useState(true);
   const [rankingError, setRankingError] = useState<string | null>(null);
   
   const { 
-    inviteFriends,      // 친구 초대 함수
-    isLoadingFriends    // 로딩 상태
+    inviteFriends,        // 친구 초대 함수
+    shareNFTToFriends,    // NFT 자랑하기 함수
+    isLoadingFriends      // 로딩 상태
   } = useLineFriends(accessToken); 
 
   console.log('여기는 home/page');
+
+  // NFT 행성별 데이터
+  const nftData = {
+    moon: {
+      name: '달',
+      emoji: '🌙',
+      image: '/images/hoshitanuNFT/moon-hoshitanu.png',
+      externalImage: 'https://kaia-baytamins.github.io/planetNFT-metadata/hoshitanu/moon-hoshitanu.png',
+      rarity: '기본 NFT',
+      story: '처음으로 달에 발을 딛었을 때의 기분은... 와! 정말 대단했어! 지구에서 보던 것과는 완전히 달랐어. 고요한 크레이터들과 은빛 먼지가 반짝이는 모습이 너무 아름다웠어. 여기서 우주 탐험의 첫 걸음을 시작했다는 게 정말 뿌듯해!'
+    },
+    mars: {
+      name: '화성',
+      emoji: '🔴',
+      image: '/images/hoshitanuNFT/mars-hoshitanu.png',
+      externalImage: 'https://kaia-baytamins.github.io/planetNFT-metadata/hoshitanu/mars-hoshitanu.png',
+      rarity: '기본 NFT',
+      story: '화성의 붉은 사막에서 모래폭풍을 만났을 때는 정말 무서웠어! 하지만 폭풍이 지나가고 나서 본 화성의 일몰은... 너무너무 아름다워서 눈물이 날 뻔했어. 지구와는 다른 파란색 일몰이 정말 신비로웠어!'
+    },
+    titan: {
+      name: '타이탄',
+      emoji: '🌊',
+      image: '/images/hoshitanuNFT/titan-hoshitanu.png',
+      externalImage: 'https://kaia-baytamins.github.io/planetNFT-metadata/hoshitanu/titan-hoshitanu.png',
+      rarity: '기본 NFT',
+      story: '타이탄의 메탄 바다에서 수영(?)을 해봤어! 물론 우주복을 입고 말이야 ㅎㅎ. 오렌지색 하늘 아래 펼쳐진 액체 메탄 호수는 정말 환상적이었어. 지구의 바다와는 완전히 다른 느낌이었지만 그만큼 신기하고 재밌었어!'
+    },
+    europa: {
+      name: '유로파',
+      emoji: '💧',
+      image: '/images/hoshitanuNFT/europa-hoshitanu.png',
+      externalImage: 'https://kaia-baytamins.github.io/planetNFT-metadata/hoshitanu/europa-hoshitanu.png',
+      rarity: '기본 NFT',
+      story: '유로파의 얼음 표면을 뚫고 지하 바다를 탐험했을 때... 정말 짜릿했어! 두꺼운 얼음 아래 숨겨진 거대한 바다에서 신비로운 생명체들을 발견할 수 있을 것 같은 기분이었어. 미지의 세계를 탐험하는 기분이 이런 거구나!'
+    },
+    saturn: {
+      name: '토성',
+      emoji: '🌀',
+      image: '/images/hoshitanuNFT/saturn-hoshitanu.png',
+      externalImage: 'https://kaia-baytamins.github.io/planetNFT-metadata/hoshitanu/saturn-hoshitanu.png',
+      rarity: '희귀 NFT',
+      story: '토성의 고리 사이를 날아다녔을 때의 그 짜릿함! 무수한 얼음과 돌 조각들 사이를 스르륵 지나가는 기분은... 마치 우주의 롤러코스터를 타는 것 같았어! 아름답고 위험하지만 그만큼 스릴 넘치는 모험이었어!'
+    }
+  };
 
   const fetchLeaderboardData = async () => {
     try {
@@ -164,6 +212,33 @@ export default function HomePage({ accessToken, profile, isLoading }) {
     }
   };
 
+  // NFT 카드 클릭 핸들러
+  const handleNFTClick = (nftKey: string) => {
+    setSelectedNFT(nftData[nftKey]);
+    setShowNFTModal(true);
+  };
+
+  // 친구에게 자랑하기 핸들러
+  const handleShareNFT = async () => {
+    if (!selectedNFT) return;
+    
+    // 유저명 가져오기 (LIFF 프로필에서)
+    const userName = profile?.displayName || '우주탐험가';
+    
+    // 새로운 NFT 자랑하기 함수 사용 - 외부 이미지 URL 사용
+    const result = await shareNFTToFriends(
+      selectedNFT.name, 
+      userName,
+      selectedNFT.externalImage, // 외부 URL 사용
+      selectedNFT.story,
+      selectedNFT.rarity
+    );
+    if (result?.success) {
+      setShowNFTModal(false);
+      setShowNFTShareSuccessModal(true); // NFT 자랑 성공 모달로 변경
+    }
+  };
+
   // 친구 초대 핸들러
   const handleInviteFriends = async () => {
     const result = await inviteFriends();
@@ -203,6 +278,31 @@ export default function HomePage({ accessToken, profile, isLoading }) {
           </div>
         </div>
       )}
+
+      {/* NFT 자랑 성공 모달 */}
+      {showNFTShareSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-slate-800 rounded-2xl p-6 m-4 max-w-sm w-full border border-slate-600">
+            <div className="text-center">
+              <div className="text-6xl mb-4">🌟</div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                우주 신호 전송 완료! 🛸
+              </h3>
+              <p className="text-gray-300 mb-6">
+                동료 우주 탐험가들에게<br />
+                당신의 놀라운 탐험 경험을<br />
+                성공적으로 자랑했습니다!
+              </p>
+              <button
+                onClick={() => setShowNFTShareSuccessModal(false)}
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-all"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* 메인 콘텐츠 */}
       <div className="relative z-10">
@@ -234,7 +334,10 @@ export default function HomePage({ accessToken, profile, isLoading }) {
           
           <div className="flex gap-3 overflow-x-auto pb-2" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
             {/* 달 NFT */}
-            <div className="min-w-[120px] bg-gradient-to-br from-gray-400/20 to-gray-600/20 rounded-xl p-3 border border-gray-500/30 flex-shrink-0">
+            <div 
+              onClick={() => handleNFTClick('moon')}
+              className="min-w-[120px] bg-gradient-to-br from-gray-400/20 to-gray-600/20 rounded-xl p-3 border border-gray-500/30 flex-shrink-0 cursor-pointer hover:scale-105 transition-transform"
+            >
               <div className="text-center">
                 <div className="text-3xl mb-2">🌙</div>
                 <div className="text-sm font-bold text-white">달</div>
@@ -244,7 +347,10 @@ export default function HomePage({ accessToken, profile, isLoading }) {
             </div>
 
             {/* 화성 NFT */}
-            <div className="min-w-[120px] bg-gradient-to-br from-red-500/20 to-orange-600/20 rounded-xl p-3 border border-red-500/30 flex-shrink-0">
+            <div 
+              onClick={() => handleNFTClick('mars')}
+              className="min-w-[120px] bg-gradient-to-br from-red-500/20 to-orange-600/20 rounded-xl p-3 border border-red-500/30 flex-shrink-0 cursor-pointer hover:scale-105 transition-transform"
+            >
               <div className="text-center">
                 <div className="text-3xl mb-2">🔴</div>
                 <div className="text-sm font-bold text-white">화성</div>
@@ -254,7 +360,10 @@ export default function HomePage({ accessToken, profile, isLoading }) {
             </div>
 
             {/* 타이탄 NFT */}
-            <div className="min-w-[120px] bg-gradient-to-br from-blue-500/20 to-cyan-600/20 rounded-xl p-3 border border-blue-500/30 flex-shrink-0">
+            <div 
+              onClick={() => handleNFTClick('titan')}
+              className="min-w-[120px] bg-gradient-to-br from-blue-500/20 to-cyan-600/20 rounded-xl p-3 border border-blue-500/30 flex-shrink-0 cursor-pointer hover:scale-105 transition-transform"
+            >
               <div className="text-center">
                 <div className="text-3xl mb-2">🌊</div>
                 <div className="text-sm font-bold text-white">타이탄</div>
@@ -264,7 +373,10 @@ export default function HomePage({ accessToken, profile, isLoading }) {
             </div>
 
             {/* 유로파 NFT */}
-            <div className="min-w-[120px] bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-xl p-3 border border-cyan-500/30 flex-shrink-0">
+            <div 
+              onClick={() => handleNFTClick('europa')}
+              className="min-w-[120px] bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-xl p-3 border border-cyan-500/30 flex-shrink-0 cursor-pointer hover:scale-105 transition-transform"
+            >
               <div className="text-center">
                 <div className="text-3xl mb-2">💧</div>
                 <div className="text-sm font-bold text-white">유로파</div>
@@ -274,7 +386,10 @@ export default function HomePage({ accessToken, profile, isLoading }) {
             </div>
 
             {/* 토성 NFT */}
-            <div className="min-w-[120px] bg-gradient-to-br from-purple-500/20 to-pink-600/20 rounded-xl p-3 border border-purple-500/30 flex-shrink-0">
+            <div 
+              onClick={() => handleNFTClick('saturn')}
+              className="min-w-[120px] bg-gradient-to-br from-purple-500/20 to-pink-600/20 rounded-xl p-3 border border-purple-500/30 flex-shrink-0 cursor-pointer hover:scale-105 transition-transform"
+            >
               <div className="text-center">
                 <div className="text-3xl mb-2">🌀</div>
                 <div className="text-sm font-bold text-white">토성</div>
@@ -493,6 +608,72 @@ export default function HomePage({ accessToken, profile, isLoading }) {
 
 
         </div>
+
+        {/* NFT 상세 모달 */}
+        {showNFTModal && selectedNFT && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="bg-slate-800 rounded-2xl p-6 m-4 max-w-md w-full border border-slate-600 max-h-[80vh] overflow-y-auto relative">
+              {/* 닫기 버튼 */}
+              <button 
+                onClick={() => setShowNFTModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-600 transition-colors"
+              >
+                ✕
+              </button>
+
+              <div className="text-center">
+                {/* NFT 제목 */}
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <span className="text-3xl">{selectedNFT.emoji}</span>
+                  <h3 className="text-xl font-bold text-white">{selectedNFT.name} 탐험 기록</h3>
+                </div>
+
+                {/* 호시타누 이미지 */}
+                <div className="mb-6">
+                  <img 
+                    src={selectedNFT.image}
+                    alt={`${selectedNFT.name}에서의 호시타누`}
+                    className="w-48 h-48 mx-auto rounded-2xl object-cover border-4 border-purple-500/30 shadow-lg"
+                  />
+                </div>
+
+                {/* NFT 등급 */}
+                <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium mb-4 ${
+                  selectedNFT.rarity === '희귀 NFT' 
+                    ? 'bg-orange-600/80 text-orange-100' 
+                    : 'bg-gray-600/80 text-gray-100'
+                }`}>
+                  {selectedNFT.rarity}
+                </div>
+
+                {/* 호시타누의 경험담 */}
+                <div className="bg-slate-700/50 rounded-xl p-4 mb-6 border border-slate-600/30">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-purple-400 to-blue-500 p-1">
+                      <img 
+                        src="/images/hoshitanu.png" 
+                        alt="호시타누" 
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    </div>
+                    <span className="text-sm font-medium text-purple-300">호시타누의 경험담</span>
+                  </div>
+                  <p className="text-sm text-gray-300 leading-relaxed text-left">
+                    "{selectedNFT.story}"
+                  </p>
+                </div>
+
+                {/* 친구에게 자랑하기 버튼 */}
+                <button
+                  onClick={handleShareNFT}
+                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium py-3 px-6 rounded-xl transition-all shadow-lg"
+                >
+                  친구에게 자랑하기 🚀
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
