@@ -24,8 +24,8 @@ import DefiModal from '@/components/quest/DefiModal';
 import { useQuests } from '@/hooks/useQuests';
 import { useDefiQuests } from '@/hooks/useDefiQuests';
 import authService from '@/services/authService';
-import { gasDelegationService } from '@/services/gasDelegationService';
 import type { Quest, QuestProgress, DefiQuestType } from '@/services/types';
+import { keccak256 } from "@ethersproject/keccak256";
 
 export default function QuestPage() {
   const { getNumericBalance } = useWallet();
@@ -34,7 +34,6 @@ export default function QuestPage() {
   const { 
     quests, 
     questProgress, 
-    questStats, 
     loading, 
     error,
     startQuest,
@@ -43,7 +42,6 @@ export default function QuestPage() {
   
   const { 
     portfolio, 
-    defiStats, 
     portfolioLoading, 
     prepareDefiTransaction,
     executeDelegatedTransaction 
@@ -108,67 +106,126 @@ export default function QuestPage() {
       const userAddress = await signer.getAddress();
       
       // Step 4: Prepare transaction data from backend with user address
+      console.log('🔍 Step 4: Preparing transaction data from backend...');
+      console.log('DeFi type:', currentDefiType);
+      console.log('Amount:', amount.toString());
+      console.log('User address:', userAddress);
+      
       const transactionData = await prepareDefiTransaction(currentDefiType, amount.toString());
       
+      console.log('📦 Backend transaction data response:', transactionData);
+      
       if (!transactionData?.success || !transactionData.transactionData) {
+        console.error('❌ Transaction preparation failed:', transactionData);
         alert(`❌ 트랜잭션 준비 실패: ${transactionData?.error || '알 수 없는 오류'}`);
         return;
       }
       
-      // Step 5: Create KAIA transaction and sign using KAIA SDK
+      console.log('✅ Transaction data prepared successfully:', transactionData.transactionData);
+      
+      // Step 5: Create proper senderTxHashRLP using Kaia SDK (like the example)
       let senderTxHashRLP: string;
       
       try {
-        console.log('Creating KAIA fee delegated transaction with Kaikas');
+        console.log('🔍 Step 5: Creating senderTxHashRLP using Kaia SDK with Kaikas signing');
         
-        // Import KAIA SDK components for transaction type
+        // Import required Kaia SDK components
+        console.log('📦 Importing Kaia SDK components...');
         const { TxType } = await import('@kaiachain/ethers-ext/v6');
+        const { KlaytnTxFactory } = await import('@kaiachain/js-ext-core');
+        console.log('✅ Kaia SDK components imported successfully');
+        console.log('TxType.FeeDelegatedSmartContractExecution:', TxType.FeeDelegatedSmartContractExecution);
         
-        // Create KAIA transaction object for Kaikas
-        const kaiaTransaction = {
+        // Get nonce for the transaction
+        console.log('🔍 Getting nonce for user address:', userAddress);
+        const nonce = await provider.getTransactionCount(userAddress);
+        console.log('✅ Nonce retrieved:', nonce);
+        
+        // Validate transaction data structure
+        console.log('🔍 Validating backend transaction data structure...');
+        console.log('transactionData.transactionData.to:', transactionData.transactionData.to);
+        console.log('transactionData.transactionData.data:', transactionData.transactionData.data);
+        console.log('transactionData.transactionData.gas:', transactionData.transactionData.gas);
+        console.log('transactionData.transactionData.gasPrice:', transactionData.transactionData.gasPrice);
+        
+        // Create the fee-delegated transaction object (same as example)
+        const tx = {
+          type: TxType.FeeDelegatedSmartContractExecution,
+          from: userAddress,
+          to: transactionData.transactionData.to,
+          value: 0,
+          data: transactionData.transactionData.data,
+          gasLimit: transactionData.transactionData.gas, // Use gasLimit instead of gas
+          gasPrice: transactionData.transactionData.gasPrice,
+          nonce: nonce,
+          chainId: 1001 // Kairos testnet
+        };
+        
+        console.log('🔍 Transaction object for KlaytnTxFactory:', tx);
+        
+        // Create KlaytnTx object (same as example)
+        console.log('🔍 Creating KlaytnTx object from transaction...');
+        const klaytnTx = KlaytnTxFactory.fromObject(tx);
+        console.log('✅ KlaytnTx object created successfully');
+        
+        // Get the sigRLP hash that needs to be signed
+        console.log('🔍 Generating sigRLP hash for signing...');
+        const sigRLP = klaytnTx.sigRLP();
+        console.log('sigRLP:', sigRLP);
+        
+        const sigHash = keccak256(sigRLP);
+        console.log('✅ sigHash to sign:', sigHash);
+        
+        // Use Kaikas klay_signTransaction with full transaction object
+        console.log('🔍 Requesting signature from Kaikas...');
+        const kaiasTx = {
           type: '0x31', // FeeDelegatedSmartContractExecution in hex
           from: userAddress,
           to: transactionData.transactionData.to,
-          value: transactionData.transactionData.value || '0x0',
+          value: '0x0',
           data: transactionData.transactionData.data,
           gas: transactionData.transactionData.gas,
           gasPrice: transactionData.transactionData.gasPrice,
+          nonce: `0x${nonce.toString(16)}`,
         };
         
-        console.log('KAIA transaction object for Kaikas:', kaiaTransaction);
+        console.log('🔍 Transaction object for Kaikas:', kaiasTx);
         
-        // Use Kaikas native method to sign KAIA transaction
-        const kaiaSignResult = await window.klaytn.request({
+        const signedTx = await window.klaytn.request({
           method: 'klay_signTransaction',
-          params: [kaiaTransaction]
+          params: [kaiasTx]
         });
         
-        console.log('✅ Kaikas generated senderTxHashRLP:', kaiaSignResult);
+        console.log('✅ Signed transaction from Kaikas:', signedTx);
+        senderTxHashRLP = signedTx.rawTransaction;
         
-        // Extract the rawTransaction (senderTxHashRLP) from the response
-        if (kaiaSignResult && kaiaSignResult.rawTransaction) {
-          senderTxHashRLP = kaiaSignResult.rawTransaction;
-          console.log('✅ Extracted senderTxHashRLP:', senderTxHashRLP);
-        } else {
-          throw new Error('Kaikas did not return rawTransaction');
-        }
+        console.log('✅ senderTxHashRLP generated by Kaikas:', senderTxHashRLP);
+        console.log('senderTxHashRLP length:', senderTxHashRLP.length);
         
       } catch (signError) {
-        console.error('❌ KAIA transaction signing error:', signError);
-        alert('❌ KAIA 트랜잭션 서명에 실패했습니다. Kaikas 지갑이 연결되어 있고 올바른 네트워크에 있는지 확인해주세요.');
+        console.error('❌ Kaia SDK signing error:', signError);
+        alert('❌ Kaia 트랜잭션 서명에 실패했습니다. Kaikas 지갑이 연결되어 있고 올바른 네트워크에 있는지 확인해주세요.');
         return;
       }
 
       // Step 6: Execute the delegated transaction with senderTxHashRLP
-      // Backend will use the proper senderTxHashRLP from KAIA SDK
+      console.log('🔍 Step 6: Sending senderTxHashRLP to backend for fee delegation...');
+      
+      const backendPayload = {
+        ...transactionData.transactionData,
+        from: userAddress,
+        signedMessage: senderTxHashRLP // KAIA SDK senderTxHashRLP
+      };
+      
+      console.log('📦 Backend payload:', backendPayload);
+      console.log('senderTxHashRLP being sent:', senderTxHashRLP);
+      
       const delegationResponse = await executeDelegatedTransaction(
-        {
-          ...transactionData.transactionData,
-          from: userAddress,
-          signedMessage: senderTxHashRLP // KAIA SDK senderTxHashRLP
-        },
+        backendPayload,
         '' // No separate userSignature needed for KAIA SDK approach
       );
+      
+      console.log('📦 Backend delegation response:', delegationResponse);
 
       if (delegationResponse?.success) {
         alert(`🎉 ${typeNames[currentDefiType]} 트랜잭션이 성공적으로 실행되었습니다!\n\n투자 금액: ${amount.toFixed(2)} USDT\nTx Hash: ${delegationResponse.txHash}`);
