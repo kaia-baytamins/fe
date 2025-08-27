@@ -1,16 +1,12 @@
 interface SearchAndFilterProps {
   currentCategory: string;
-  currentMarketType: 'mint' | 'user' | 'quest';
   onCategoryChange: (category: string) => void;
-  onMarketTypeChange: (type: 'mint' | 'user' | 'quest') => void;
   onSearch: (query: string) => void;
 }
 
 export default function SearchAndFilter({ 
   currentCategory, 
-  currentMarketType, 
   onCategoryChange, 
-  onMarketTypeChange,
   onSearch 
 }: SearchAndFilterProps) {
   const categories = [
@@ -50,29 +46,6 @@ export default function SearchAndFilter({
         ))}
       </div>
 
-      {/* 마켓 타입 토글 */}
-      <div className="flex bg-slate-700/30 rounded-xl p-1">
-        <button 
-          className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-            currentMarketType === 'mint'
-              ? 'bg-green-600 text-white'
-              : 'text-gray-300 hover:text-white'
-          }`}
-          onClick={() => onMarketTypeChange('mint')}
-        >
-          🏭 보급형
-        </button>
-        <button 
-          className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-            currentMarketType === 'user'
-              ? 'bg-blue-600 text-white'
-              : 'text-gray-300 hover:text-white'
-          }`}
-          onClick={() => onMarketTypeChange('user')}
-        >
-          👥 사용자
-        </button>
-      </div>
     </div>
   );
 }

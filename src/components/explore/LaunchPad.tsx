@@ -48,7 +48,7 @@ export default function LaunchPad({ setActiveSection, profile }: LaunchPadProps)
     // SpaceshipMaintenance와 동일한 매핑 구조 사용
     const categoryMapping = {
       engine: { name: '엔진', icon: '⚙️' },
-      material: { name: '재질', icon: '🛠️' },  
+      material: { name: '우주선소재', icon: '🛡️' },  
       specialEquipment: { name: '특수장비', icon: '⚡' },
       fuelTank: { name: '연료', icon: '⛽' }
     };
@@ -59,10 +59,10 @@ export default function LaunchPad({ setActiveSection, profile }: LaunchPadProps)
         key,
         equippedItem,
         hasItemId: equippedItem?.itemId,
-        itemInfo: equippedItem?.itemId ? getItemById(equippedItem.itemId) : null
+        itemInfo: (equippedItem?.itemId !== undefined && equippedItem?.itemId !== null) ? getItemById(equippedItem.itemId) : null
       });
       
-      if (equippedItem && equippedItem.itemId) {
+      if (equippedItem && equippedItem.itemId !== undefined && equippedItem.itemId !== null) {
         const itemInfo = getItemById(equippedItem.itemId);
         if (itemInfo) {
           equipped.push({

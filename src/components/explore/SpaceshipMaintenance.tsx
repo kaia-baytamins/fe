@@ -90,7 +90,9 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
 
       let filtered = [];
       const inventoryIds = Object.keys(inventoryData.inventory).map(id => parseInt(id)); // API 응답에서 itemId 추출
-      const equippedIds = Object.values(equippedItems).map(item => item?.itemId).filter(Boolean);
+      const equippedIds = Object.values(equippedItems)
+        .map(item => item?.itemId)
+        .filter(id => id !== undefined && id !== null);
 
       switch (selectedCategory) {
         case 'engine':
@@ -117,11 +119,11 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
           filtered = [];
       }
 
-      // 일단 items.json의 equipped 속성 사용 (나중에 API로 교체)
-      // filtered = filtered.map(item => ({
-      //   ...item,
-      //   equipped: equippedIds.includes(item.id)
-      // }));
+      // API 데이터를 사용해서 장착 상태 업데이트
+      filtered = filtered.map(item => ({
+        ...item,
+        equipped: equippedIds.includes(item.id)
+      }));
 
       setFilteredItems(filtered);
     };
@@ -185,7 +187,7 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
 
   const categories = [
     { id: 'engine', name: '엔진', icon: '⚙️' },
-    { id: 'material', name: '재질', icon: '🛠️' },
+    { id: 'material', name: '우주선소재', icon: '🛡️' },
     { id: 'special', name: '특수장비', icon: '⚡' },
     { id: 'fuel', name: '연료', icon: '⛽' },
   ];
@@ -229,7 +231,7 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
             };
             
             const equippedItem = equippedItems[categoryMapping[category.id]];
-            const itemInfo = equippedItem ? getItemById(equippedItem.itemId) : null;
+            const itemInfo = (equippedItem && equippedItem.itemId !== undefined && equippedItem.itemId !== null) ? getItemById(equippedItem.itemId) : null;
 
             return (
               <div 
