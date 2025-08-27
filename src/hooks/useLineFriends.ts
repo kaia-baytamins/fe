@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-export const useLineFriends = (accessToken: string | null) => {
+export const useLineFriends = () => {
   const [isLoadingFriends, setIsLoadingFriends] = useState(false);
 
   // 친구 초대하기 (공유 기능 사용)

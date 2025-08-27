@@ -1,4 +1,4 @@
-import { API_CONFIG, handleApiError, getAuthHeaders } from './config';
+import { API_CONFIG, handleApiError } from './config';
 
 export interface InventoryResponse {
   inventory: {

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useWallet } from '@/contexts/WalletContext';
 import StarBackground from '@/components/explore/StarBackground';
 import StaticCosmicBackground from '@/components/market/StaticCosmicBackground';
 import AmbientParticles from '@/components/market/AmbientParticles';
@@ -21,10 +20,11 @@ interface Item {
   seller: string;
   category: string;
   rarity: '기본' | '희귀' | '에픽' | '레전더리';
+  type: 'mint' | 'user' | 'quest';
 }
 
 export default function MarketPage() {
-  const { getNumericBalance } = useWallet();
+  // const { getNumericBalance } = useWallet();
   const [currentCategory, setCurrentCategory] = useState('all');
   const [showItemModal, setShowItemModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
@@ -118,7 +118,8 @@ export default function MarketPage() {
             price: price,
             seller: seller,
             category: category,
-            rarity: rarity
+            rarity: rarity,
+            type: 'user'
           };
         });
         
@@ -132,7 +133,7 @@ export default function MarketPage() {
   }, []);
 
   const getFilteredItems = () => {
-    let items = Object.values(itemData).filter(item => {
+    const items = Object.values(itemData).filter(item => {
       const matchesCategory = currentCategory === 'all' || item.category === currentCategory;
       const matchesSearch = searchQuery === '' || item.name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;

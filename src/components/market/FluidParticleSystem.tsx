@@ -59,7 +59,7 @@ export default function FluidParticleSystem() {
       const particles = particlesRef.current;
       const mouse = mouseRef.current;
 
-      particles.forEach((particle, index) => {
+      particles.forEach((particle) => {
         // 마우스 인력 효과
         if (isMouseInside) {
           const dx = mouse.x - particle.x;

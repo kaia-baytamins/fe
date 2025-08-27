@@ -11,6 +11,12 @@ export interface LeaderboardRankingsResponse {
   successfulExplorations: LeaderboardRankingEntry[];
 }
 
+export interface LeaderboardMetadata {
+  timestamp?: string;
+  category?: string;
+  season?: string;
+}
+
 export interface TopPerformer {
   user: {
     username: string;

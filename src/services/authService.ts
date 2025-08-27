@@ -1,4 +1,4 @@
-import { API_CONFIG, getAuthHeaders, handleApiError } from './config';
+import { API_CONFIG, handleApiError } from './config';
 
 interface SimpleLoginRequest {
   userId: string;

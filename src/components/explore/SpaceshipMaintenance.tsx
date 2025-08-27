@@ -11,18 +11,22 @@ interface SpaceshipMaintenanceProps {
 
 type ItemCategory = 'engine' | 'material' | 'special' | 'fuel';
 
+interface EquippedItem {
+  itemId?: number | null;
+}
+
 export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMaintenanceProps) {
   const [selectedCategory, setSelectedCategory] = useState<ItemCategory>('engine');
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [showSellModal, setShowSellModal] = useState(false);
-  const [sellPrice, setSellPrice] = useState('');
+  // const [sellPrice, setSellPrice] = useState('');
   const [itemsData, setItemsData] = useState<any[]>([]);
   const [filteredItems, setFilteredItems] = useState<any[]>([]);
 
   const [inventoryData, setInventoryData] = useState<InventoryResponse | null>(null);
   const [isLoadingInventory, setIsLoadingInventory] = useState(true);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
-  const [equippedItems, setEquippedItems] = useState<any>({});
+  const [equippedItems, setEquippedItems] = useState<Record<string, EquippedItem>>({});
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationType, setNotificationType] = useState<'success' | 'error'>('success');

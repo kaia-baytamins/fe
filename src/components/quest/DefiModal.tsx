@@ -11,7 +11,7 @@ interface DefiModalProps {
   loading?: boolean;
 }
 
-export default function DefiModal({ isOpen, type, onClose, onParticipate, walletBalance = 1250, loading = false }: DefiModalProps) {
+export default function DefiModal({ isOpen, type, onClose, onParticipate, walletBalance = 1250 }: DefiModalProps) {
   const [amount, setAmount] = useState(0);
   const [sliderValue, setSliderValue] = useState(0);
   const [approvalStatus, setApprovalStatus] = useState<ApprovalCheckResponse | null>(null);

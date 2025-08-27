@@ -9,9 +9,8 @@ import StaticUI from '@/components/market/StaticUI';
 import { useLineFriends } from '@/hooks/useLineFriends';
 import { leaderboardService, LeaderboardRankingEntry, LeaderboardRankingsResponse } from '@/services/leaderboardService';
 import { nftService, NFTCollectionResponse } from '@/services/nftService';
-import { useWallet } from '@/contexts/WalletContext';
 
-export default function HomePage({ accessToken, profile, isLoading }) {
+export default function HomePage({ profile }) {
   const [activeRankingTab, setActiveRankingTab] = useState<'global' | 'friends'>('global');
   const [activeRankingType, setActiveRankingType] = useState<'explorations' | 'planets'>('explorations');
   const [showInviteSuccessModal, setShowInviteSuccessModal] = useState(false);
@@ -24,13 +23,13 @@ export default function HomePage({ accessToken, profile, isLoading }) {
   const [nftCollection, setNftCollection] = useState<NFTCollectionResponse | null>(null);
   const [isLoadingNFT, setIsLoadingNFT] = useState(false);
   
-  const { walletAddress } = useWallet(); // 지갑 주소 가져오기
+  // const { walletAddress } = useWallet(); // 지갑 주소 가져오기
   
   const { 
     inviteFriends,        // 친구 초대 함수
     shareNFTToFriends,    // NFT 자랑하기 함수
     isLoadingFriends      // 로딩 상태
-  } = useLineFriends(accessToken); 
+  } = useLineFriends(); 
 
   console.log('여기는 home/page');
 
@@ -670,7 +669,7 @@ export default function HomePage({ accessToken, profile, isLoading }) {
                     <span className="text-sm font-medium text-purple-300">호시타누의 경험담</span>
                   </div>
                   <p className="text-sm text-gray-300 leading-relaxed text-left">
-                    "{selectedNFT.story}"
+                    &quot;{selectedNFT.story}&quot;
                   </p>
                 </div>
 
