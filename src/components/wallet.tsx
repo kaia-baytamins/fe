@@ -125,7 +125,7 @@ const WalletComponent: React.FC = () => {
       const balance = await tokenContract.balanceOf(address);
 
       // 잔액을 읽기 쉽게 변환 (실제 decimals 사용)
-      const formattedBalance = ethers.utils.formatUnits(balance, actualDecimals);
+      const formattedBalance = ethers.formatUnits(balance, actualDecimals);
       setTokenBalance(formattedBalance);
     } catch (err: any) {
       console.error("Failed to fetch token balance:", err);

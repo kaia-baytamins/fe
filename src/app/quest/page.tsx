@@ -97,7 +97,7 @@ export default function QuestPage() {
       }
 
       // Step 2: Get KAIA provider and signer using ethers-ext
-      const provider = new ethers.providers.Web3Provider(window.klaytn);
+      const provider = new ethers.BrowserProvider(window.klaytn);
       const signer = await provider.getSigner();
       
       
