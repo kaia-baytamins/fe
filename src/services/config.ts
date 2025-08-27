@@ -45,6 +45,7 @@ export const API_CONFIG = {
     INVENTORY_EQUIP: '/inventory/equip',
     INVENTORY_UNEQUIP: '/inventory/unequip',
     INVENTORY_EQUIPPED: '/inventory/equipped',
+    INVENTORY_SELL: '/inventory/sell',
   }
 };
 

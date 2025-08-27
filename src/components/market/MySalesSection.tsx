@@ -14,23 +14,9 @@ export default function MySalesSection({ onSellItem }: MySalesSectionProps) {
   const myItems: MyItem[] = [
     {
       id: '1',
-      icon: '🔥',
-      name: '플라즈마 엔진',
-      price: '10 KAIA',
-      isActive: true
-    },
-    {
-      id: '2',
-      icon: '⛽',
-      name: '대형 연료통',
-      price: '판매 대기',
-      isActive: false
-    },
-    {
-      id: '3',
-      icon: '💎',
-      name: '다이아몬드 유리',
-      price: '25 KAIA',
+      icon: '⚙️',
+      name: '기본 엔진 MK-2',
+      price: '2 USDT',
       isActive: true
     }
   ];

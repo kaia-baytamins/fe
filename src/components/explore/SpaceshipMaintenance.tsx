@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { inventoryService, InventoryResponse } from '@/services/inventoryService';
+import SellItemModal from './SellItemModal';
 
 interface SpaceshipMaintenanceProps {
   setActiveSection: (section: 'launchpad' | 'maintenance') => void;
@@ -176,12 +177,32 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
     setShowSellModal(true);
   };
 
-  const confirmSell = () => {
-    if (selectedItem && sellPrice) {
-      console.log('판매:', selectedItem, '가격:', sellPrice);
-      setShowSellModal(false);
-      setSellPrice('');
-      setSelectedItem(null);
+  const confirmSell = async (price: string) => {
+    if (selectedItem && price) {
+      try {
+        console.log('판매:', selectedItem, '가격:', price);
+        
+        // API 호출하여 아이템을 인벤토리에서 제거
+        const response = await inventoryService.sellItem(
+          testWalletAddress, 
+          selectedItem.id, 
+          parseFloat(price)
+        );
+        
+        if (response.success) {
+          showNotification(`${selectedItem.name}을(를) ${price} USDT에 판매 등록했습니다!`, 'success');
+          
+          // 인벤토리 새로고침
+          await fetchInventoryData();
+          await fetchEquippedItems();
+        }
+      } catch (error) {
+        console.error('판매 실패:', error);
+        showNotification('판매에 실패했습니다.', 'error');
+      } finally {
+        setShowSellModal(false);
+        setSelectedItem(null);
+      }
     }
   };
 
@@ -325,6 +346,17 @@ export default function SpaceshipMaintenance({ setActiveSection }: SpaceshipMain
           )}
         </div>
       </div>
+
+      {/* 판매 모달 */}
+      <SellItemModal
+        item={selectedItem}
+        isOpen={showSellModal}
+        onClose={() => {
+          setShowSellModal(false);
+          setSelectedItem(null);
+        }}
+        onSell={confirmSell}
+      />
 
       {/* 알림 모달 */}
       {showNotificationModal && (

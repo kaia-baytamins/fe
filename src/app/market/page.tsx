@@ -1,13 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
 import StarBackground from '@/components/explore/StarBackground';
 import StaticCosmicBackground from '@/components/market/StaticCosmicBackground';
 import AmbientParticles from '@/components/market/AmbientParticles';
 import SimpleFloatingElements from '@/components/market/SimpleFloatingElements';
 import StaticUI from '@/components/market/StaticUI';
-import MarketHeader from '@/components/market/MarketHeader';
 import SearchAndFilter from '@/components/market/SearchAndFilter';
 import StaticItemCard from '@/components/market/StaticItemCard';
 import ItemModal from '@/components/market/ItemModal';
@@ -20,9 +19,8 @@ interface Item {
   stats: string;
   price: string;
   seller: string;
-  type: 'mint' | 'user' | 'quest';
   category: string;
-  rarity: 'common' | 'rare' | 'legendary';
+  rarity: '기본' | '희귀' | '에픽' | '레전더리';
 }
 
 export default function MarketPage() {
@@ -32,97 +30,106 @@ export default function MarketPage() {
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('price-low');
+  const [itemData, setItemData] = useState<Record<string, Item>>({});
 
-  const itemData: Record<string, Item> = {
-    'basic_engine': {
-      id: 'basic_engine',
-      name: '기본 엔진 MK-1',
-      icon: '⚙️',
-      stats: '추진력 +100',
-      price: '2 KAIA',
-      seller: '보급형 아이템',
-      type: 'mint',
-      category: 'engine',
-      rarity: 'common'
-    },
-    'advanced_engine': {
-      id: 'advanced_engine',
-      name: '플라즈마 엔진',
-      icon: '🔥',
-      stats: '추진력 +180',
-      price: '8 KAIA',
-      seller: '보급형 아이템',
-      type: 'mint',
-      category: 'engine',
-      rarity: 'rare'
-    },
-    'turbo_v5': {
-      id: 'turbo_v5',
-      name: '터보 엔진 V5',
-      icon: '⚙️',
-      stats: '추진력 +250',
-      price: '15 KAIA',
-      seller: 'SpaceTrader님이 판매',
-      type: 'user',
-      category: 'engine',
-      rarity: 'legendary'
-    },
-    'warp_drive': {
-      id: 'warp_drive',
-      name: '워프 드라이브',
-      icon: '⚡',
-      stats: '순간이동 능력',
-      price: '50 KAIA',
-      seller: 'CosmicMaster님이 판매 (퀘스트 전용)',
-      type: 'quest',
-      category: 'special',
-      rarity: 'legendary'
-    },
-    'basic_glass': {
-      id: 'basic_glass',
-      name: '기본 강화유리',
-      icon: '🛡️',
-      stats: '방어력 +50',
-      price: '1.5 KAIA',
-      seller: '보급형 아이템',
-      type: 'mint',
-      category: 'material',
-      rarity: 'common'
-    },
-    'crystal_glass': {
-      id: 'crystal_glass',
-      name: '크리스탈 유리',
-      icon: '💎',
-      stats: '방어력 +120',
-      price: '6 KAIA',
-      seller: '보급형 아이템',
-      type: 'mint',
-      category: 'material',
-      rarity: 'rare'
-    },
-    'basic_fuel': {
-      id: 'basic_fuel',
-      name: '표준 연료통',
-      icon: '⛽',
-      stats: '용량 200L',
-      price: '2 KAIA',
-      seller: '보급형 아이템',
-      type: 'mint',
-      category: 'fuel',
-      rarity: 'common'
-    },
-    'large_fuel': {
-      id: 'large_fuel',
-      name: '대형 연료통',
-      icon: '🛢️',
-      stats: '용량 500L',
-      price: '7 KAIA',
-      seller: '보급형 아이템',
-      type: 'mint',
-      category: 'fuel',
-      rarity: 'rare'
-    }
-  };
+  // items.json 데이터를 로드하고 마켓 형식으로 변환
+  useEffect(() => {
+    const loadItems = async () => {
+      try {
+        const response = await fetch('/asset/items.json');
+        const data = await response.json();
+        
+        const convertedItems: Record<string, Item> = {};
+        
+        // 희귀도별 아이템 필터링 (기본 3개, 희귀 2개, 에픽 2개, 레전더리 1개)
+        const basicItems = data.items.filter((item: any) => item.score < 100).slice(0, 3);
+        const rareItems = data.items.filter((item: any) => item.score >= 100 && item.score < 200).slice(0, 2);
+        const epicItems = data.items.filter((item: any) => item.score >= 200 && item.score < 300).slice(0, 2);
+        const legendaryItems = data.items.filter((item: any) => item.score >= 300).slice(0, 1);
+        
+        const filteredItems = [...basicItems, ...rareItems, ...epicItems, ...legendaryItems];
+
+        filteredItems.forEach((item: any, index: number) => {
+          // 카테고리 분류
+          let category = 'special';
+          let icon = '🔧';
+          
+          if (item.name.includes('엔진')) {
+            category = 'engine';
+            if (item.name.includes('플라스마') || item.name.includes('에테르')) {
+              icon = '🔥';
+            } else if (item.name.includes('터보')) {
+              icon = '⚡';
+            } else {
+              icon = '⚙️';
+            }
+          } else if (item.name.includes('강철') || item.name.includes('티타늄') || 
+                     item.name.includes('오리하르콘') || item.name.includes('비브라늄')) {
+            category = 'material';
+            if (item.name.includes('티타늄')) {
+              icon = '🛡️';
+            } else if (item.name.includes('오리하르콘') || item.name.includes('비브라늄')) {
+              icon = '💎';
+            } else {
+              icon = '🔩';
+            }
+          } else if (item.name.includes('연료') || item.name.includes('추진체') || 
+                     item.name.includes('메탄') || item.name.includes('플라즈마') ||
+                     item.name.includes('바이오매스') || item.name.includes('수소') ||
+                     item.name.includes('반물질') || item.name.includes('젤') ||
+                     item.name.includes('양자') || item.name.includes('카오스')) {
+            category = 'fuel';
+            if (item.name.includes('플라즈마') || item.name.includes('반물질') || 
+                item.name.includes('양자') || item.name.includes('카오스')) {
+              icon = '🌟';
+            } else if (item.name.includes('수소') || item.name.includes('이온')) {
+              icon = '⚡';
+            } else {
+              icon = '⛽';
+            }
+          }
+          
+          // 희귀도 결정 (score 기반)
+          let rarity: '기본' | '희귀' | '에픽' | '레전더리' = '기본';
+          if (item.score >= 300) rarity = '레전더리';
+          else if (item.score >= 200) rarity = '에픽';
+          else if (item.score >= 100) rarity = '희귀';
+          
+          // 가격 결정 (희귀도 기반으로 수정)
+          let price = '1 USDT';
+          if (rarity === '레전더리') price = `${Math.floor(item.score / 6)} USDT`;
+          else if (rarity === '에픽') price = `${Math.floor(item.score / 8)} USDT`;
+          else if (rarity === '희귀') price = `${Math.floor(item.score / 12)} USDT`;
+          else price = `${Math.max(1, Math.floor(item.score / 20))} USDT`;
+          
+          // 판매자 랜덤 생성
+          const sellers = [
+            '스타쉽테크', '갤럭시엔진', 'SpaceTrader', 'CosmicMaster',
+            '아머텍코리아', '크리스탈웍스', '우주연료공사', '프로펠런트프로',
+            '네뷸라코퍼레이션', '퀀텀시스템즈', '오리온테크', '안드로메다웍스'
+          ];
+          const seller = `${sellers[index % sellers.length]}님이 판매`;
+          
+          convertedItems[`item_${item.id}`] = {
+            id: `item_${item.id}`,
+            name: item.name,
+            icon: icon,
+            stats: `성능 +${item.score}`,
+            price: price,
+            seller: seller,
+            category: category,
+            rarity: rarity
+          };
+        });
+        
+        setItemData(convertedItems);
+      } catch (error) {
+        console.error('Failed to load items:', error);
+      }
+    };
+    
+    loadItems();
+  }, []);
 
   const getFilteredItems = () => {
     let items = Object.values(itemData).filter(item => {
@@ -133,8 +140,8 @@ export default function MarketPage() {
 
     // 가격 정렬 적용
     items.sort((a, b) => {
-      const priceA = parseFloat(a.price.replace(' KAIA', ''));
-      const priceB = parseFloat(b.price.replace(' KAIA', ''));
+      const priceA = parseFloat(a.price.replace(' USDT', ''));
+      const priceB = parseFloat(b.price.replace(' USDT', ''));
       
       switch (sortOrder) {
         case 'price-low':
@@ -184,10 +191,8 @@ export default function MarketPage() {
       <SimpleFloatingElements />
       
       {/* 정적 UI 컨테이너 */}
-      <div className="relative z-20 p-4 space-y-6">
+      <div className="relative z-20 p-4 pt-4 space-y-4">
         <StaticUI>
-        <MarketHeader walletBalance={getNumericBalance()} />
-        
         <SearchAndFilter 
           currentCategory={currentCategory}
           onCategoryChange={setCurrentCategory}
