@@ -13,15 +13,24 @@ interface ExplorePageProps {
 
 export default function ExplorePage({ profile }: ExplorePageProps) {
   const [activeSection, setActiveSection] = useState<ExploreSection>('launchpad');
+  const [launchpadKey, setLaunchpadKey] = useState(0);
+
+  const handleSectionChange = (section: ExploreSection) => {
+    if (section === 'launchpad') {
+      // LaunchPad로 돌아올 때 키를 변경해서 컴포넌트를 새로 렌더링
+      setLaunchpadKey(prev => prev + 1);
+    }
+    setActiveSection(section);
+  };
 
   const renderSection = () => {
     switch (activeSection) {
       case 'launchpad':
-        return <LaunchPad setActiveSection={setActiveSection} profile={profile} />;
+        return <LaunchPad key={`launchpad-${launchpadKey}`} setActiveSection={handleSectionChange} profile={profile} />;
       case 'maintenance':
-        return <SpaceshipMaintenance setActiveSection={setActiveSection} />;
+        return <SpaceshipMaintenance key="maintenance" setActiveSection={handleSectionChange} />;
       default:
-        return <LaunchPad setActiveSection={setActiveSection} profile={profile} />;
+        return <LaunchPad key={`launchpad-default-${launchpadKey}`} setActiveSection={handleSectionChange} profile={profile} />;
     }
   };
 
