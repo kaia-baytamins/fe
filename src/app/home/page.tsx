@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import SunsetBackground from '@/components/home/SunsetBackground';
 import { useLineFriends } from '@/hooks/useLineFriends';
 import { leaderboardService, LeaderboardRankingEntry, LeaderboardRankingsResponse } from '@/services/leaderboardService';
+import { nftService, NFTCollectionResponse } from '@/services/nftService';
+import { useWallet } from '@/contexts/WalletContext';
 
 export default function HomePage({ accessToken, profile, isLoading }) {
   const [activeRankingTab, setActiveRankingTab] = useState<'global' | 'friends'>('global');
@@ -15,6 +17,10 @@ export default function HomePage({ accessToken, profile, isLoading }) {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardRankingsResponse | null>(null);
   const [isLoadingRanking, setIsLoadingRanking] = useState(true);
   const [rankingError, setRankingError] = useState<string | null>(null);
+  const [nftCollection, setNftCollection] = useState<NFTCollectionResponse | null>(null);
+  const [isLoadingNFT, setIsLoadingNFT] = useState(false);
+  
+  const { walletAddress } = useWallet(); // 지갑 주소 가져오기
   
   const { 
     inviteFriends,        // 친구 초대 함수
@@ -88,9 +94,35 @@ export default function HomePage({ accessToken, profile, isLoading }) {
     }
   };
 
+  const fetchNFTCollection = async () => {
+    // 테스트용 하드코딩된 주소 사용
+    const testAddress = '0x1234567890123456789012345678901234567890';
+    
+    try {
+      setIsLoadingNFT(true);
+      console.log('🚀 Fetching NFT collection for TEST ADDRESS:', testAddress);
+      
+      const data = await nftService.getUserNFTCollection(testAddress);
+      setNftCollection(data);
+      console.log('📦 NFT Collection data:', data);
+      console.log('📊 Total Explorations:', data.totalExplorations);
+      console.log('🌍 Conquered Planets:', data.conqueredPlanets);
+      console.log('🎮 Owned NFTs:', data.ownedNFTs);
+    } catch (error) {
+      console.error('Failed to fetch NFT collection:', error);
+    } finally {
+      setIsLoadingNFT(false);
+    }
+  };
+
   // 리더보드 데이터 가져오기
   useEffect(() => {
     fetchLeaderboardData();
+  }, []);
+
+  // NFT 컬렉션 데이터 가져오기 (페이지 로드 시 바로 테스트)
+  useEffect(() => {
+    fetchNFTCollection(); // 테스트용 하드코딩 주소로 바로 호출
   }, []);
 
   // 글로벌 랭킹 데이터 (탐험 횟수)
@@ -316,13 +348,17 @@ export default function HomePage({ accessToken, profile, isLoading }) {
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-xl p-3 text-center border border-blue-500/30">
               <div className="text-2xl mb-1">🚀</div>
-              <div className="font-bold text-white">67</div>
+              <div className="font-bold text-white">
+                {isLoadingNFT ? '...' : nftCollection?.totalExplorations || 0}
+              </div>
               <div className="text-xs text-blue-400">총 탐험 횟수</div>
             </div>
             
             <div className="bg-gradient-to-br from-green-600/20 to-emerald-600/20 rounded-xl p-3 text-center border border-green-500/30">
               <div className="text-2xl mb-1">🌍</div>
-              <div className="font-bold text-white">5</div>
+              <div className="font-bold text-white">
+                {isLoadingNFT ? '...' : nftCollection?.conqueredPlanets || 0}
+              </div>
               <div className="text-xs text-green-400">정복한 행성</div>
             </div>
           </div>
@@ -333,89 +369,55 @@ export default function HomePage({ accessToken, profile, isLoading }) {
           </div>
           
           <div className="flex gap-3 overflow-x-auto pb-2" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
-            {/* 달 NFT */}
-            <div 
-              onClick={() => handleNFTClick('moon')}
-              className="min-w-[120px] bg-gradient-to-br from-gray-400/20 to-gray-600/20 rounded-xl p-3 border border-gray-500/30 flex-shrink-0 cursor-pointer hover:scale-105 transition-transform"
-            >
-              <div className="text-center">
-                <div className="text-3xl mb-2">🌙</div>
-                <div className="text-sm font-bold text-white">달</div>
-                <div className="text-xs text-gray-400">기본 NFT</div>
-                <div className="text-xs text-yellow-400 mt-1">완료</div>
-              </div>
-            </div>
-
-            {/* 화성 NFT */}
-            <div 
-              onClick={() => handleNFTClick('mars')}
-              className="min-w-[120px] bg-gradient-to-br from-red-500/20 to-orange-600/20 rounded-xl p-3 border border-red-500/30 flex-shrink-0 cursor-pointer hover:scale-105 transition-transform"
-            >
-              <div className="text-center">
-                <div className="text-3xl mb-2">🔴</div>
-                <div className="text-sm font-bold text-white">화성</div>
-                <div className="text-xs text-gray-400">기본 NFT</div>
-                <div className="text-xs text-yellow-400 mt-1">완료</div>
-              </div>
-            </div>
-
-            {/* 타이탄 NFT */}
-            <div 
-              onClick={() => handleNFTClick('titan')}
-              className="min-w-[120px] bg-gradient-to-br from-blue-500/20 to-cyan-600/20 rounded-xl p-3 border border-blue-500/30 flex-shrink-0 cursor-pointer hover:scale-105 transition-transform"
-            >
-              <div className="text-center">
-                <div className="text-3xl mb-2">🌊</div>
-                <div className="text-sm font-bold text-white">타이탄</div>
-                <div className="text-xs text-gray-400">기본 NFT</div>
-                <div className="text-xs text-yellow-400 mt-1">완료</div>
-              </div>
-            </div>
-
-            {/* 유로파 NFT */}
-            <div 
-              onClick={() => handleNFTClick('europa')}
-              className="min-w-[120px] bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-xl p-3 border border-cyan-500/30 flex-shrink-0 cursor-pointer hover:scale-105 transition-transform"
-            >
-              <div className="text-center">
-                <div className="text-3xl mb-2">💧</div>
-                <div className="text-sm font-bold text-white">유로파</div>
-                <div className="text-xs text-gray-400">기본 NFT</div>
-                <div className="text-xs text-yellow-400 mt-1">완료</div>
-              </div>
-            </div>
-
-            {/* 토성 NFT */}
-            <div 
-              onClick={() => handleNFTClick('saturn')}
-              className="min-w-[120px] bg-gradient-to-br from-purple-500/20 to-pink-600/20 rounded-xl p-3 border border-purple-500/30 flex-shrink-0 cursor-pointer hover:scale-105 transition-transform"
-            >
-              <div className="text-center">
-                <div className="text-3xl mb-2">🌀</div>
-                <div className="text-sm font-bold text-white">토성</div>
-                <div className="text-xs text-orange-400">희귀 NFT</div>
-                <div className="text-xs text-yellow-400 mt-1">완료</div>
-              </div>
-            </div>
-
-            {/* 잠긴 행성들 - 미리보기 */}
-            <div className="min-w-[120px] bg-gradient-to-br from-gray-700/30 to-gray-800/30 rounded-xl p-3 border border-gray-600/30 flex-shrink-0 opacity-60">
-              <div className="text-center">
-                <div className="text-3xl mb-2">🥶</div>
-                <div className="text-sm font-bold text-gray-400">천왕성</div>
-                <div className="text-xs text-gray-500">희귀 NFT</div>
-                <div className="text-xs text-gray-500 mt-1">미획득</div>
-              </div>
-            </div>
-
-            <div className="min-w-[120px] bg-gradient-to-br from-gray-700/30 to-gray-800/30 rounded-xl p-3 border border-gray-600/30 flex-shrink-0 opacity-60">
-              <div className="text-center">
-                <div className="text-3xl mb-2">🧊</div>
-                <div className="text-sm font-bold text-gray-400">트리톤</div>
-                <div className="text-xs text-gray-500">희귀 NFT</div>
-                <div className="text-xs text-gray-500 mt-1">미획득</div>
-              </div>
-            </div>
+            {isLoadingNFT ? (
+              <div className="text-gray-400 text-sm">NFT 로딩 중...</div>
+            ) : nftCollection && nftCollection.ownedNFTs.length > 0 ? (
+              nftCollection.ownedNFTs.map((nft, index) => {
+                const planetMapping = {
+                  '달': 'moon',
+                  '화성': 'mars', 
+                  '타이탄': 'titan',
+                  '유로파': 'europa',
+                  '토성': 'saturn'
+                };
+                const handleKey = planetMapping[nft.planetInfo.name];
+                
+                // 각 행성별 그라데이션 색상 매핑
+                const gradientColors = {
+                  '달': 'from-gray-400/20 to-gray-600/20',
+                  '화성': 'from-red-500/20 to-orange-600/20',
+                  '타이탄': 'from-blue-500/20 to-cyan-600/20',
+                  '유로파': 'from-cyan-500/20 to-blue-600/20',
+                  '토성': 'from-purple-500/20 to-pink-600/20'
+                };
+                
+                const borderColors = {
+                  '달': 'border-gray-500/30',
+                  '화성': 'border-red-500/30',
+                  '타이탄': 'border-blue-500/30',
+                  '유로파': 'border-cyan-500/30',
+                  '토성': 'border-purple-500/30'
+                };
+                
+                return (
+                  <div 
+                    key={index}
+                    onClick={() => handleNFTClick(handleKey)}
+                    className={`min-w-[120px] bg-gradient-to-br ${gradientColors[nft.planetInfo.name]} rounded-xl p-3 ${borderColors[nft.planetInfo.name]} border flex-shrink-0 cursor-pointer hover:scale-105 transition-transform`}
+                  >
+                    <div className="text-center">
+                      <div className="text-3xl mb-2">{nft.planetInfo.emoji}</div>
+                      <div className="text-sm font-bold text-white">{nft.planetInfo.name}</div>
+                      <div className="text-xs text-gray-400">{nft.planetInfo.rarity}</div>
+                      <div className="text-xs text-yellow-400 mt-1">x{nft.count}</div>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-gray-400 text-sm">아직 획득한 NFT가 없습니다</div>
+            )}
+            
           </div>
         </div>
 
