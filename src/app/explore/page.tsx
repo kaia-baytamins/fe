@@ -3,24 +3,34 @@
 import { useState } from 'react';
 import StarBackground from '@/components/explore/StarBackground';
 import LaunchPad from '@/components/explore/LaunchPad';
-import PetTraining from '@/components/explore/PetTraining';
 import SpaceshipMaintenance from '@/components/explore/SpaceshipMaintenance';
 
-type ExploreSection = 'launchpad' | 'pet' | 'maintenance';
+type ExploreSection = 'launchpad' | 'maintenance';
 
-export default function ExplorePage() {
+interface ExplorePageProps {
+  profile?: any;
+}
+
+export default function ExplorePage({ profile }: ExplorePageProps) {
   const [activeSection, setActiveSection] = useState<ExploreSection>('launchpad');
+  const [launchpadKey, setLaunchpadKey] = useState(0);
+
+  const handleSectionChange = (section: ExploreSection) => {
+    if (section === 'launchpad') {
+      // LaunchPad로 돌아올 때 키를 변경해서 컴포넌트를 새로 렌더링
+      setLaunchpadKey(prev => prev + 1);
+    }
+    setActiveSection(section);
+  };
 
   const renderSection = () => {
     switch (activeSection) {
       case 'launchpad':
-        return <LaunchPad setActiveSection={setActiveSection} />;
-      case 'pet':
-        return <PetTraining setActiveSection={setActiveSection} />;
+        return <LaunchPad key={`launchpad-${launchpadKey}`} setActiveSection={handleSectionChange} profile={profile} />;
       case 'maintenance':
-        return <SpaceshipMaintenance setActiveSection={setActiveSection} />;
+        return <SpaceshipMaintenance key="maintenance" setActiveSection={handleSectionChange} />;
       default:
-        return <LaunchPad setActiveSection={setActiveSection} />;
+        return <LaunchPad key={`launchpad-default-${launchpadKey}`} setActiveSection={handleSectionChange} profile={profile} />;
     }
   };
 

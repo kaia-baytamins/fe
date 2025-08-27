@@ -28,10 +28,10 @@ interface Item {
 export default function MarketPage() {
   const { getNumericBalance } = useWallet();
   const [currentCategory, setCurrentCategory] = useState('all');
-  const [currentMarketType, setCurrentMarketType] = useState<'mint' | 'user' | 'quest'>('mint');
   const [showItemModal, setShowItemModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState('price-low');
 
   const itemData: Record<string, Item> = {
     'basic_engine': {
@@ -125,11 +125,28 @@ export default function MarketPage() {
   };
 
   const getFilteredItems = () => {
-    return Object.values(itemData).filter(item => {
-      const matchesType = currentMarketType === 'mint' ? item.type === 'mint' : item.type !== 'mint';
+    let items = Object.values(itemData).filter(item => {
+      const matchesCategory = currentCategory === 'all' || item.category === currentCategory;
       const matchesSearch = searchQuery === '' || item.name.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesType && matchesSearch;
+      return matchesCategory && matchesSearch;
     });
+
+    // 가격 정렬 적용
+    items.sort((a, b) => {
+      const priceA = parseFloat(a.price.replace(' KAIA', ''));
+      const priceB = parseFloat(b.price.replace(' KAIA', ''));
+      
+      switch (sortOrder) {
+        case 'price-low':
+          return priceA - priceB;
+        case 'price-high':
+          return priceB - priceA;
+        default:
+          return 0;
+      }
+    });
+
+    return items;
   };
 
   const openItemModal = (itemId: string) => {
@@ -173,9 +190,7 @@ export default function MarketPage() {
         
         <SearchAndFilter 
           currentCategory={currentCategory}
-          currentMarketType={currentMarketType}
           onCategoryChange={setCurrentCategory}
-          onMarketTypeChange={setCurrentMarketType}
           onSearch={setSearchQuery}
         />
 
@@ -183,17 +198,21 @@ export default function MarketPage() {
         <div className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-4 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-yellow-400 font-bold flex items-center gap-2">
-              {currentMarketType === 'mint' ? '🏭 보급형 아이템' : '👥 사용자 판매 아이템'}
+              🛒 판매 대기열
             </h2>
             
-            <select className="bg-slate-700 text-white px-3 py-1 rounded-lg text-sm border border-slate-600">
+            <select 
+              className="bg-slate-700 text-white px-3 py-1 rounded-lg text-sm border border-slate-600"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+            >
               <option value="price-low">가격 낮은순</option>
               <option value="price-high">가격 높은순</option>
               <option value="popular">인기순</option>
             </select>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-4">
             {filteredItems.map((item) => (
               <StaticItemCard
                 key={item.id}

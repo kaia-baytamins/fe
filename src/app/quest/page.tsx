@@ -20,7 +20,6 @@ import DefiPortfolio from '@/components/quest/DefiPortfolio';
 import SpecialEvent from '@/components/quest/SpecialEvent';
 import QuestTabs from '@/components/quest/QuestTabs';
 import QuestCard from '@/components/quest/QuestCard';
-import DefiOptionSelector from '@/components/quest/DefiOptionSelector';
 import DefiModal from '@/components/quest/DefiModal';
 import { useQuests } from '@/hooks/useQuests';
 import { useDefiQuests } from '@/hooks/useDefiQuests';
@@ -52,7 +51,6 @@ export default function QuestPage() {
 
   // UI state
   const [activeTab, setActiveTab] = useState('daily');
-  const [selectedDefiOption, setSelectedDefiOption] = useState<string | null>(null);
   const [showDefiModal, setShowDefiModal] = useState(false);
   const [currentDefiType, setCurrentDefiType] = useState<DefiQuestType | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -71,17 +69,6 @@ export default function QuestPage() {
     checkAuth();
   }, []);
 
-  const weeklyDefiOptions = [
-    { id: 'stake', title: '💰 스테이킹', details: '$100, 7일 유지' },
-    { id: 'lp_providing', title: '🌊 LP 제공', details: 'KAIA-USDT $100' },
-    { id: 'lending', title: '🏦 렌딩', details: '$100 예치' }
-  ];
-
-  const specialDefiOptions = [
-    { id: 'high_stake', title: '💰 고액 스테이킹', details: '$500, 30일' },
-    { id: 'multi_lp', title: '🌊 멀티 LP', details: '2개 풀 동시' },
-    { id: 'lending_borrow', title: '🏦 렌딩+보로잉', details: '복합 전략' }
-  ];
 
   const handleDefiAction = (type: 'staking' | 'lp_providing' | 'lending') => {
     const defiTypeMap: Record<string, DefiQuestType> = {
@@ -206,53 +193,6 @@ export default function QuestPage() {
     }
   };
 
-  const startDefiQuest = async () => {
-    if (!selectedDefiOption) {
-      alert('먼저 DeFi 옵션을 선택해주세요!');
-      return;
-    }
-    
-    try {
-      setActionLoading(true);
-      
-      // Find the DeFi quest that matches the selected option
-      const defiQuests = quests.filter(quest => 
-        ['staking', 'lending', 'lp_providing'].includes(quest.category)
-      );
-      
-      const selectedQuest = defiQuests.find(quest => {
-        // Map option IDs to quest categories
-        const optionMapping: Record<string, string> = {
-          'stake': 'staking',
-          'lp_providing': 'lp_providing', 
-          'lending': 'lending',
-          'high_stake': 'staking',
-          'multi_lp': 'lp_providing',
-          'lending_borrow': 'lending'
-        };
-        return quest.category === optionMapping[selectedDefiOption];
-      });
-      
-      if (!selectedQuest) {
-        alert('선택한 옵션에 맞는 퀘스트를 찾을 수 없습니다.');
-        return;
-      }
-      
-      const success = await startQuest(selectedQuest.id);
-      
-      if (success) {
-        alert(`🎉 ${selectedQuest.title} 퀘스트를 시작했습니다!\n\n퀘스트 진행 상황은 실시간으로 업데이트됩니다.`);
-        setSelectedDefiOption(null); // Reset selection
-      } else {
-        alert('❌ 퀘스트 시작에 실패했습니다. 다시 시도해주세요.');
-      }
-    } catch (error) {
-      console.error('Quest start error:', error);
-      alert('❌ 퀘스트 시작 중 오류가 발생했습니다.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
 
   // Helper function to get quest progress by quest ID
   const getQuestProgressById = (questId: string): QuestProgress | undefined => {
@@ -262,6 +202,55 @@ export default function QuestPage() {
   // Helper function to get quests by type
   const getQuestsByType = (type: Quest['type']) => {
     return quests.filter(quest => quest.type === type);
+  };
+
+  // Helper function to get reward display info
+  const getRewardDisplay = (quest: Quest) => {
+    // Check for items first (our new reward structure)
+    if (quest.rewards.items && quest.rewards.items.length > 0) {
+      const firstItem = quest.rewards.items[0];
+      const rewardName = firstItem.name || '장비';
+      const rarityText = firstItem.rarity === 'common' ? '기본 등급' :
+                        firstItem.rarity === 'rare' ? '희귀 등급' :
+                        firstItem.rarity === 'epic' ? '에픽 등급' :
+                        firstItem.rarity === 'legendary' ? '레전더리 등급' :
+                        firstItem.rarity === 'rare-epic' ? '희귀-에픽 등급' :
+                        firstItem.rarity === 'epic-legendary' ? '에픽-레전더리 등급' :
+                        '특별';
+      
+      // If multiple items, show count
+      if (quest.rewards.items.length > 1) {
+        return {
+          name: `${rewardName} ${quest.rewards.items.length}개`,
+          value: `${rarityText} 보상`
+        };
+      }
+      
+      return {
+        name: rewardName,
+        value: rarityText
+      };
+    }
+    
+    // Fallback to other reward types
+    if (quest.rewards.kaiaAmount) {
+      return {
+        name: `${quest.rewards.kaiaAmount} KAIA`,
+        value: quest.rewards.experience ? `경험치 +${quest.rewards.experience}` : '즉시 지급'
+      };
+    }
+    
+    if (quest.rewards.nftTokenId) {
+      return {
+        name: quest.rewards.nftTokenId,
+        value: quest.rewards.experience ? `경험치 +${quest.rewards.experience}` : 'NFT 보상'
+      };
+    }
+    
+    return {
+      name: '보상',
+      value: quest.rewards.experience ? `경험치 +${quest.rewards.experience}` : '특별 보상'
+    };
   };
 
   // Helper function to handle quest action (start/claim)
@@ -381,6 +370,8 @@ export default function QuestPage() {
                     buttonDisabled = false;
                   }
 
+                  const rewardInfo = getRewardDisplay(quest);
+
                   return (
                     <QuestCard
                       key={quest.id}
@@ -391,8 +382,8 @@ export default function QuestPage() {
                       maxProgress={maxProgress}
                       progressText={`${currentProgress}/${maxProgress} 완료`}
                       rewardIcon="💰"
-                      rewardName={quest.rewards.kaiaAmount ? `${quest.rewards.kaiaAmount} KAIA` : quest.rewards.nftTokenId || '보상'}
-                      rewardValue={quest.rewards.experience ? `경험치 +${quest.rewards.experience}` : '즉시 지급'}
+                      rewardName={rewardInfo.name}
+                      rewardValue={rewardInfo.value}
                       status={status}
                       buttonText={buttonText}
                       buttonDisabled={buttonDisabled || actionLoading}
@@ -449,6 +440,8 @@ export default function QuestPage() {
                     buttonDisabled = false;
                   }
 
+                  const rewardInfo = getRewardDisplay(quest);
+
                   return (
                     <QuestCard
                       key={quest.id}
@@ -459,8 +452,8 @@ export default function QuestPage() {
                       maxProgress={maxProgress}
                       progressText={`${currentProgress}/${maxProgress} 완료`}
                       rewardIcon="🔥"
-                      rewardName={quest.rewards.kaiaAmount ? `${quest.rewards.kaiaAmount} KAIA` : quest.rewards.nftTokenId || '희귀 보상'}
-                      rewardValue={quest.rewards.experience ? `경험치 +${quest.rewards.experience}` : '주간 보상'}
+                      rewardName={rewardInfo.name}
+                      rewardValue={rewardInfo.value}
                       status={status}
                       buttonText={buttonText}
                       buttonDisabled={buttonDisabled || actionLoading}
@@ -469,31 +462,6 @@ export default function QuestPage() {
                   );
                 })}
                 
-                {/* Special DeFi quest with options */}
-                {getQuestsByType('weekly').some(q => ['staking', 'lending', 'lp_providing'].includes(q.category)) && (
-                  <QuestCard
-                    type="weekly"
-                    title="💎 DeFi 마스터 (선택형)"
-                    description="아래 옵션 중 하나를 선택하여 7일간 유지하세요."
-                    progress={0}
-                    maxProgress={1}
-                    progressText={selectedDefiOption ? "옵션 선택됨" : "옵션 선택 필요"}
-                    rewardIcon="🔥"
-                    rewardName="희귀 NFT"
-                    rewardValue="랜덤 희귀 등급"
-                    status="locked"
-                    buttonText={actionLoading ? "처리 중..." : "옵션 선택"}
-                    buttonDisabled={actionLoading}
-                    onClick={startDefiQuest}
-                  >
-                    <DefiOptionSelector
-                      title="옵션을 선택하세요 (택1)"
-                      options={weeklyDefiOptions}
-                      selectedOption={selectedDefiOption}
-                      onOptionSelect={setSelectedDefiOption}
-                    />
-                  </QuestCard>
-                )}
                 
                 {getQuestsByType('weekly').length === 0 && (
                   <div className="text-center text-white/60 p-8">
@@ -543,6 +511,8 @@ export default function QuestPage() {
                     buttonDisabled = false;
                   }
 
+                  const rewardInfo = getRewardDisplay(quest);
+
                   return (
                     <QuestCard
                       key={quest.id}
@@ -553,8 +523,8 @@ export default function QuestPage() {
                       maxProgress={maxProgress}
                       progressText={`${currentProgress}/${maxProgress} 완료`}
                       rewardIcon="⚡"
-                      rewardName={quest.rewards.kaiaAmount ? `${quest.rewards.kaiaAmount} KAIA` : quest.rewards.nftTokenId || '전설 보상'}
-                      rewardValue={quest.rewards.experience ? `경험치 +${quest.rewards.experience}` : '특별 보상'}
+                      rewardName={rewardInfo.name}
+                      rewardValue={rewardInfo.value}
                       status={status}
                       buttonText={buttonText}
                       buttonDisabled={buttonDisabled || actionLoading}
@@ -563,29 +533,6 @@ export default function QuestPage() {
                   );
                 })}
                 
-                {/* Special high-level DeFi quest */}
-                <QuestCard
-                  type="special"
-                  title="🌟 DeFi 고수 (선택형)"
-                  description="고난이도 DeFi 전략 중 하나를 선택하여 30일간 유지하세요."
-                  progress={0}
-                  maxProgress={1}
-                  progressText={selectedDefiOption ? "옵션 선택됨" : "옵션 선택 필요"}
-                  rewardIcon="⚡"
-                  rewardName="전설 NFT"
-                  rewardValue="고성능 장비"
-                  status="locked"
-                  buttonText={actionLoading ? "처리 중..." : "옵션 선택"}
-                  buttonDisabled={actionLoading}
-                  onClick={startDefiQuest}
-                >
-                  <DefiOptionSelector
-                    title="고난이도 옵션 (택1)"
-                    options={specialDefiOptions}
-                    selectedOption={selectedDefiOption}
-                    onOptionSelect={setSelectedDefiOption}
-                  />
-                </QuestCard>
                 
                 {getQuestsByType('special').length === 0 && (
                   <div className="text-center text-white/60 p-8">
@@ -635,6 +582,8 @@ export default function QuestPage() {
                     buttonDisabled = false;
                   }
 
+                  const rewardInfo = getRewardDisplay(quest);
+
                   return (
                     <QuestCard
                       key={quest.id}
@@ -645,8 +594,8 @@ export default function QuestPage() {
                       maxProgress={maxProgress}
                       progressText={`${currentProgress}/${maxProgress} 완료`}
                       rewardIcon="🌌"
-                      rewardName={quest.rewards.kaiaAmount ? `${quest.rewards.kaiaAmount} KAIA` : quest.rewards.nftTokenId || '전설 보상'}
-                      rewardValue={quest.rewards.experience ? `경험치 +${quest.rewards.experience}` : '전설적 보상'}
+                      rewardName={rewardInfo.name}
+                      rewardValue={rewardInfo.value}
                       status={status}
                       buttonText={buttonText}
                       buttonDisabled={buttonDisabled || actionLoading}
