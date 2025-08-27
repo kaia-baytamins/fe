@@ -131,41 +131,41 @@ export default function HomePage({ accessToken, profile, isLoading }) {
 
   // 글로벌 랭킹 데이터 (탐험 횟수)
   const globalExplorationsRanking = [
-    { rank: 1, name: '우주탐험가123', value: 100, avatar: '🚀', isMe: false },
-    { rank: 2, name: '스타워즈팬', value: 85, avatar: '⭐', isMe: false },
+    { rank: 1, name: 'Kana12', value: 100, avatar: '🚀', isMe: false },
+    { rank: 2, name: 'StarLord88', value: 85, avatar: '⭐', isMe: false },
     { rank: 3, name: '나', value: 67, avatar: '🛸', isMe: true },
-    { rank: 4, name: '코스모스', value: 54, avatar: '🌌', isMe: false },
-    { rank: 5, name: '은하수여행자', value: 43, avatar: '🌟', isMe: false },
-    { rank: 6, name: '화성정착민', value: 38, avatar: '🔴', isMe: false },
-    { rank: 7, name: '달탐험대', value: 29, avatar: '🌙', isMe: false },
+    { rank: 4, name: 'CosmicRay', value: 54, avatar: '🌌', isMe: false },
+    { rank: 5, name: 'GalaxyWalker', value: 43, avatar: '🌟', isMe: false },
+    { rank: 6, name: 'RedPlanet99', value: 38, avatar: '🔴', isMe: false },
+    { rank: 7, name: 'MoonExplorer', value: 29, avatar: '🌙', isMe: false },
   ];
 
   // 글로벌 랭킹 데이터 (탐험한 행성)
   const globalPlanetRanking = [
-    { rank: 1, name: '행성마스터', value: 15, avatar: '🌍', isMe: false },
-    { rank: 2, name: '우주탐험가123', value: 12, avatar: '🚀', isMe: false },
-    { rank: 3, name: '갤럭시헌터', value: 10, avatar: '🌌', isMe: false },
-    { rank: 4, name: '스타워즈팬', value: 8, avatar: '⭐', isMe: false },
+    { rank: 1, name: 'PlanetMaster', value: 15, avatar: '🌍', isMe: false },
+    { rank: 2, name: 'Kana12', value: 12, avatar: '🚀', isMe: false },
+    { rank: 3, name: 'GalaxyHunter', value: 10, avatar: '🌌', isMe: false },
+    { rank: 4, name: 'StarLord88', value: 8, avatar: '⭐', isMe: false },
     { rank: 5, name: '나', value: 5, avatar: '🛸', isMe: true },
-    { rank: 6, name: '코스모스', value: 4, avatar: '🌟', isMe: false },
-    { rank: 7, name: '달탐험대', value: 3, avatar: '🌙', isMe: false },
+    { rank: 6, name: 'CosmicRay', value: 4, avatar: '🌟', isMe: false },
+    { rank: 7, name: 'MoonExplorer', value: 3, avatar: '🌙', isMe: false },
   ];
 
 
   // 친구 랭킹 데이터 (탐험 횟수)
   const friendsExplorationsRanking = [
-    { rank: 1, name: '김철수', value: 85, avatar: '👨', isMe: false, org: 'LINE 친구' },
+    { rank: 1, name: '이윤형', value: 85, avatar: '👨', isMe: false, org: 'LINE 친구' },
     { rank: 2, name: '나', value: 67, avatar: '🛸', isMe: true, org: 'CosmicExplorer' },
-    { rank: 3, name: '박영희', value: 54, avatar: '👩', isMe: false, org: 'LINE 친구' },
-    { rank: 4, name: '이민수', value: 43, avatar: '👱', isMe: false, org: 'LINE 친구' },
+    { rank: 3, name: '최예슬', value: 54, avatar: '👩', isMe: false, org: 'LINE 친구' },
+    { rank: 4, name: '황준하', value: 43, avatar: '👱', isMe: false, org: 'LINE 친구' },
   ];
 
   // 친구 랭킹 데이터 (탐험한 행성)
   const friendsPlanetRanking = [
-    { rank: 1, name: '김철수', value: 8, avatar: '👨', isMe: false, org: 'LINE 친구' },
-    { rank: 2, name: '박영희', value: 6, avatar: '👩', isMe: false, org: 'LINE 친구' },
+    { rank: 1, name: '황준하', value: 8, avatar: '👨', isMe: false, org: 'LINE 친구' },
+    { rank: 2, name: '최예슬', value: 6, avatar: '👩', isMe: false, org: 'LINE 친구' },
     { rank: 3, name: '나', value: 5, avatar: '🛸', isMe: true, org: 'CosmicExplorer' },
-    { rank: 4, name: '이민수', value: 2, avatar: '👱', isMe: false, org: 'LINE 친구' },
+    { rank: 4, name: '이윤형', value: 2, avatar: '👱', isMe: false, org: 'LINE 친구' },
   ];
 
 
@@ -180,20 +180,20 @@ export default function HomePage({ accessToken, profile, isLoading }) {
     },
     { 
       id: 2, 
-      name: '박영희', 
-      description: '오렌지색 · 2차원 칩',
+      name: '황준하', 
+      description: 'Defi 초보 · 게임 러버',
       avatar: '👩',
     },
     { 
       id: 3, 
-      name: '이민수', 
-      description: '스페이스쉽 초보 대기중',
+      name: '이윤형', 
+      description: '블록체인 고수 · 해커톤 무법자',
       avatar: '👱',
     },
     { 
       id: 4, 
-      name: '최지영', 
-      description: '우주 탐험 입문자',
+      name: '최예슬', 
+      description: '日本人 · 우주와 동물 애호가',
       avatar: '👧',
     },
   ];
