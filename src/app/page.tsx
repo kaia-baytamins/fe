@@ -61,9 +61,11 @@ export default function Home() {
           }
 
           setAuthCompleted(true);
+          setIsLoading(false); // 로그인 성공 시 로딩 완료!
           console.log('Auto-login completed successfully');
         } catch (error) {
           console.error('Auto-login failed:', error);
+          setIsLoading(false); // 로그인 실패해도 로딩 화면은 없애야 함
         }
       }
     };
